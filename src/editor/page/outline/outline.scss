@@ -1,0 +1,63 @@
+.outline {
+    white-space: break-spaces;
+    word-break: break-all;
+    overflow: hidden;
+
+    &__content-wrapper {
+        width: 100%;
+        height: 100%;
+        white-space: initial;
+        padding: 0 1rem;
+        box-sizing: border-box;
+    }
+
+    &__editable-box {
+        outline: none;
+        white-space: pre-wrap;
+        overflow-wrap: break-word;
+    }
+
+    >* {
+        white-space: nowrap;
+    }
+
+    &--hover {
+        outline: 1px solid wheat;
+        background-color: rgba(255, 255, 255, 0.1);
+        border-radius: 0.5rem;
+
+        .react-resizable-handle {
+            background: white;
+        }
+    }
+
+    &__drag-handle {
+        visibility: hidden;
+        font-size: 0.5rem;
+        text-align: right;
+    }
+
+    &__drag-handle--hover {
+        visibility: visible;
+        width: 100%;
+        background: wheat;
+    }
+
+    &__content {
+        display: inline-block;
+    }
+
+    &__debug {
+        opacity: 0.5;
+        background: #030303;
+        padding: 0.2rem;
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+    }
+
+    &.react-resizable {
+        position: absolute !important;
+    }
+}

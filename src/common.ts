@@ -1,0 +1,1 @@
+export interface VSCodeMessage<T extends { [key: string]: any } = {}> { type: string}

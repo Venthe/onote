@@ -1,0 +1,46 @@
+version: 1
+kind: document/open-note
+metadata:
+  title: Hello world!
+  created: 2023-06-10T08:29:57+0200
+  lastUpdated: 2023-06-11T08:29:57+0200
+outlines:
+  07ee4eac-26c1-48ce-9a7b-4e4226d70556:
+    content: >-
+      # Title
+
+
+      ## ASDasdfasd
+
+
+      * asdads  
+
+      * asdasdasd  
+
+      * asdads
+
+
+      this should be rendered as markdown
+
+
+
+      ![AC](vscode-file://vscode-app/c:/Users/jacek/Desktop/onote/exampleFiles/Cat3.jpg)
+
+
+      ```js
+
+      var n = 1
+
+      ```
+
+
+      ```plantuml
+
+      bob->alice
+
+      ```
+    metadata:
+      left: 13
+      top: 8
+      type: markdown
+      width: 618

@@ -1,0 +1,103 @@
+{
+  "name": "onote",
+  "displayName": "onote",
+  "description": "",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.79.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "customEditors": [
+      {
+        "viewType": "venthe.onote",
+        "displayName": "OpenNote editor",
+        "selector": [
+          {
+            "filenamePattern": "*.onote"
+          }
+        ],
+        "priority": "default"
+      }
+    ]
+  },
+  "scripts": {
+    "extension:compile": "webpack --mode=development --config=./webpack/extension.config.ts",
+    "extension:watch": "webpack --mode=development --config=./webpack/extension.config.ts --watch",
+    "extension": "webpack serve --mode=development --config=./webpack/extension.config.ts --watch",
+    "editor:compile": "webpack --mode=development --config=./webpack/editor.config.ts",
+    "editor:watch": "webpack --mode=development --config=./webpack/editor.config.ts",
+    "editor:serve": "webpack serve --mode=development --config=./webpack/editor.config.ts",
+    "editor:serve:web": "webpack serve --env type=web --mode=development --config=./webpack/editor.config.ts",
+    "vscode:prepublish": "npm run package",
+    "compile": "concurrently --group --timings -n extension,editor  \"npm run --silent extension:compile\" \"npm run --silent editor:compile\"",
+    "watch": "concurrently -n extension,editor  \"npm run --silent extension:watch\" \"npm run --silent editor:serve\"",
+    "package": "webpack --config ./production.webpack.config.ts",
+    "test": "node ./out/test/runTest.js",
+    "test:compile": "tsc --project . --outDir out",
+    "test:watch": "npm run tests -- --watch",
+    "test:pretest": "npm run test:compile && npm run compile && npm run verify:lint",
+    "verify:lint": "concurrently --group --timings --names=\"eslint,stylelint\" \"npm run verify:eslint\" \"npm run verify:stylelint\"",
+    "verify:eslint": "eslint src --ext ts",
+    "verify:prettier": "prettier --check --cache ./src/**/*{ts,tsx,js,jsx} ./webpack/**/*{ts,tsx,js,jsx}",
+    "verify:stylelint": "stylelint --cache --config=./.stylelintrc src/**/*.{css,scss,sass}"
+  },
+  "devDependencies": {
+    "@types/glob": "^8.1.0",
+    "@types/js-yaml": "^4.0.5",
+    "@types/mocha": "^10.0.1",
+    "@types/node": "^20.3.1",
+    "@types/react": "^18.2.11",
+    "@types/react-dom": "^18.2.4",
+    "@types/react-resizable": "^3.0.4",
+    "@types/uuid": "^9.0.2",
+    "@types/vscode": "^1.79.0",
+    "@types/webpack": "^5.28.1",
+    "@types/webpack-bundle-analyzer": "^4.6.0",
+    "@types/webpack-env": "^1.18.1",
+    "@typescript-eslint/eslint-plugin": "^5.59.8",
+    "@typescript-eslint/parser": "^5.59.8",
+    "@vscode/test-electron": "^2.3.2",
+    "babel-loader": "^9.1.2",
+    "concurrently": "^8.2.0",
+    "copy-webpack-plugin": "^11.0.0",
+    "css-loader": "^6.8.1",
+    "eslint": "^8.41.0",
+    "glob": "^8.1.0",
+    "mocha": "^10.2.0",
+    "prettier": "2.8.8",
+    "prettier-eslint": "^15.0.1",
+    "sass": "^1.63.4",
+    "sass-loader": "^13.3.2",
+    "style-loader": "^3.3.3",
+    "stylelint": "^15.7.0",
+    "stylelint-config-recommended": "^12.0.0",
+    "stylelint-scss": "^5.0.1",
+    "stylelint-selector-bem-pattern": "^2.1.1",
+    "ts-loader": "^9.4.3",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.1.3",
+    "webpack": "^5.87.0",
+    "webpack-bundle-analyzer": "^4.9.0",
+    "webpack-cli": "^5.1.1",
+    "webpack-dev-server": "^4.15.1",
+    "webpack-merge": "^5.9.0"
+  },
+  "dependencies": {
+    "@akebifiky/remark-simple-plantuml": "^1.0.2",
+    "js-yaml": "^4.1.0",
+    "organism-react-asciidoc": "^0.3.10",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-draggable": "^4.4.5",
+    "react-markdown": "^8.0.7",
+    "react-resizable": "^3.0.5",
+    "rehype-katex": "^6.0.3",
+    "remark-math": "^5.1.1",
+    "uuid": "^9.0.0"
+  }
+}

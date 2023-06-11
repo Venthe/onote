@@ -1,0 +1,15 @@
+.page {
+    padding: 1rem;
+    min-width: 100%;
+    min-height: 100%;
+    box-sizing: border-box;
+
+    &__debug {
+        position: absolute;
+        right: 0;
+        top: 0;
+        background: gray;
+        padding: 0.2rem;
+        border-radius: 5% 0 0 5%;
+    }
+}
