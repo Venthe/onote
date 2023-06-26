@@ -1,0 +1,13 @@
+body {
+  margin: 0;
+  background-color: #292929;
+}
+
+#root {
+  /* height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  margin: 0;
+  padding: 0; */
+  background-color: #292929;
+}

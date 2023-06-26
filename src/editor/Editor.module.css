@@ -1,0 +1,44 @@
+#EditorComposerRoot {
+  display: grid;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+
+  grid-template-areas:
+    "ribbon"
+    "page"
+    "statusBar"
+  ;
+  grid-template-rows: [Ribbon] min-content [Editor] 1fr [StatusBar] min-content;
+  grid-template-columns: 1fr;
+}
+
+#Ribbon {
+  display: block;
+  grid-row-start: 1;
+  grid-row-end: 2;
+  grid-column-start: 1;
+  grid-column-end: 2;
+  position: relative;
+}
+
+#EditorContainer {
+  position: relative;
+  display: block;
+  grid-row-start: 2;
+  grid-row-end: 3;
+  grid-column-start: 1;
+  grid-column-end: 2;
+}
+
+#StatusBar {
+  display: block;
+  position: relative;
+  background-color: black;
+  padding: 0.2rem;
+  grid-row-start: 3;
+  grid-row-end: 4;
+  grid-column-start: 1;
+  grid-column-end: 2;
+}

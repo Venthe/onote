@@ -1,0 +1,12 @@
+.tabGroup {
+  display: flex;
+  box-sizing: border-box;
+  overflow: hidden;
+  min-width: var(--cell-size);
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.tabGroupDebug {
+  outline: 1px dashed red;
+}

@@ -1,0 +1,9 @@
+.ribbon button {
+  &[disabled] .toolbar__icon {
+    fill: rgb(92, 92, 92);
+  }
+
+  .toolbar__icon {
+    fill: white;
+  }
+}

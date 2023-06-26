@@ -1,0 +1,23 @@
+.container {
+  width: fit-content;
+  margin-top: 0;
+  margin-bottom: 0;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+}
+
+.content {
+  display: flex;
+  align-items: start;
+  width: fit-content;
+  flex: 1 0 auto;
+  box-sizing: border-box;
+  height: calc(var(--cell-size) * 3);
+  max-height: calc(var(--cell-size) * 3);
+}
+
+.title {
+  text-align: center;
+  font-size: 0.6rem;
+}

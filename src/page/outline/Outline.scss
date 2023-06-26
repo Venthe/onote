@@ -1,0 +1,99 @@
+$resize-margin: 6px;
+$header-height: 8px;
+$content-padding: 14px;
+
+.outline {
+  // transition: all 0.05s cubic-bezier(0.645, 0.045, 0.355, 1);
+
+  iframe {
+    pointer-events: none;
+    border: 1px solid red;
+  }
+
+  &__position-origin {
+    position: absolute;
+    height: 0;
+    overflow: visible;
+  }
+
+  &__container {
+    position: absolute;
+    top: 0;
+    overflow: visible;
+    z-index: 1;
+    margin-left: -$content-padding;
+    padding-left: $content-padding;
+    padding-right: max($content-padding, $resize-margin);
+    border: solid 1px transparent;
+
+    &--selected,
+    &--hover {
+      border-color: #c8cacc;
+      z-index: 109;
+    }
+  }
+
+  // TODO: Add ellipsis at the center of titlebar container
+  &__title-container {
+    position: absolute;
+    left: 0;
+    right: 0;
+    text-align: right;
+    z-index: 10;
+    line-height: 8px;
+    border-bottom: 1px solid transparent;
+
+    &--selected,
+    &--hover {
+      cursor: move;
+      background-color: #f9f9f9;
+      border-color: #c8cacc;
+    }
+  }
+
+  &__resize-handle {
+    cursor: e-resize;
+    font-size: $header-height;
+    line-height: $header-height/2;
+    vertical-align: top;
+    font-weight: bolder;
+
+    &--selected,
+    &--hover {
+      &::before {
+        color: #464544;
+        content: '<>'
+      }
+    }
+  }
+
+  &__resize {
+    cursor: e-resize;
+    position: absolute;
+    left: auto;
+    right: 0;
+    bottom: 0;
+    width: $resize-margin;
+    height: 100%;
+
+    &--debug:hover {
+      background: rgba(1, 0, 0, 0.3);
+    }
+  }
+
+  &__content {
+    padding-top: max($header-height, $content-padding);
+    padding-bottom: $content-padding;
+    min-width: 100px;
+    word-break: break-all;
+  }
+
+  &__debug-info-container {
+    padding: $content-padding/2;
+    background: rgba(0, 0, 0, 0.3);
+    position: absolute;
+    left: 0;
+    right: 0;
+    z-index: 10;
+  }
+}

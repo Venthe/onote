@@ -1,0 +1,23 @@
+.ribbon .font-selector {
+  &__size {
+    max-width: 3.5rem;
+    min-width: unset;
+
+    input {
+      max-width: unset;
+      min-width: unset;
+      width: 1rem;
+    }
+  }
+
+  &__face {
+    max-width: 8.5rem;
+    min-width: unset;
+
+    input {
+      max-width: unset;
+      min-width: unset;
+      width: 6rem;
+    }
+  }
+}

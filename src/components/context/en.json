@@ -1,0 +1,14 @@
+{
+  "ribbon.home.clipboard.partition.name": "Clipboard",
+  "ribbon.home.basicText.partition.name": "Basic text",
+  "ribbon.home.styles.partition.name": "Styles",
+  "ribbon.home.tags.partition.name": "Tags",
+  "ribbon.home.clipboard.action.paste.name": "Paste",
+  "ribbon.home.clipboard.action.copy.name": "Copy",
+  "ribbon.home.clipboard.action.formatPainter.name": "Format painter",
+  "ribbon.home.clipboard.action.cut.name": "Cut",
+  "ribbon.home.styles.action.flag.todo.name": "To do tag",
+  "ribbon.home.styles.action.flag.find.name": "Find tags",
+  "ribbon.debug.action.toggleDebug.name": "Toggle debug",
+  "ribbon.home.styles.action.flag.outlookTag.name": "Outlook tasks"
+}

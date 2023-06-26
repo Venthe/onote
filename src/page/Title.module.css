@@ -1,0 +1,24 @@
+.title {
+  display: inline-block;
+}
+
+.header {
+  padding: 0.2rem;
+  margin: 0.2rem;
+  min-width: 10rem;
+  white-space:break-spaces;
+  word-break: keep-all;
+}
+
+.divider {
+  padding-right: 4rem;
+}
+
+.creationDate {}
+
+.titleContainer {
+  position: absolute;
+  height: 0;
+  overflow: visible;
+  z-index: 1;
+}

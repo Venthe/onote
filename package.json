@@ -1,14 +1,73 @@
 {
-  "name": "onote3",
-  "version": "0.0.0",
-  "license": "MIT",
-  "scripts": {},
+  "name": "web",
+  "version": "0.1.0",
   "private": true,
-  "dependencies": {},
-  "devDependencies": {
-    "nx": "16.3.2"
+  "dependencies": {
+    "@akebifiky/remark-simple-plantuml": "^1.0.2",
+    "@fluentui/react-components": "^9.25.1",
+    "@fluentui/svg-icons": "^1.1.198",
+    "@testing-library/jest-dom": "^5.16.5",
+    "@testing-library/react": "^13.4.0",
+    "@testing-library/user-event": "^13.5.0",
+    "deep-equal": "^2.2.1",
+    "editor": "*",
+    "js-yaml": "^4.1.0",
+    "organism-react-asciidoc": "^0.3.10",
+    "react-dom": "^18.2.0",
+    "react-markdown": "^8.0.7",
+    "react-scripts": "5.0.1",
+    "rehype-katex": "^6.0.3",
+    "remark-math": "^5.1.1",
+    "sass": "^1.63.6",
+    "uuid": "^9.0.0",
+    "web-vitals": "^2.1.4"
   },
-  "workspaces": [
-    "packages/*"
-  ]
+  "scripts": {
+    "serve": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "lint": "eslint",
+    "prettier": "prettier",
+    "ajv": "ajv"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+    "@types/deep-equal": "^1.0.1",
+    "@types/jest": "^29.5.2",
+    "@types/js-yaml": "^4.0.5",
+    "@types/node": "^20.3.1",
+    "@types/react": "^18.2.13",
+    "@types/react-dom": "^18.2.6",
+    "@types/uuid": "^9.0.2",
+    "@types/webpack-env": "^1.18.1",
+    "@typescript-eslint/eslint-plugin": "^5.60.0",
+    "@typescript-eslint/parser": "^5.60.0",
+    "ajv": "^8.12.0",
+    "ajv-cli": "^5.0.0",
+    "eslint": "^8.43.0",
+    "eslint-plugin-react": "^7.32.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "prettier": "2.8.8",
+    "react": "^18.2.0",
+    "typescript": "^4.9.5"
+  }
 }
