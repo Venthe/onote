@@ -1,9 +1,9 @@
 .ribbon button {
   &[disabled] .toolbar__icon {
-    fill: rgb(92, 92, 92);
+    fill: var(--colorNeutralForegroundDisabled);
   }
 
   .toolbar__icon {
-    fill: white;
+    fill: var(--colorNeutralForeground1);
   }
 }

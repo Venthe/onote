@@ -46,7 +46,7 @@ test
 The lift coefficient ($C_L$) is a dimensionless coefficient.
 
 \`\`\`plantuml
-Alice->Bob                   
+Alice->Bob
 \`\`\`
 `
       ,

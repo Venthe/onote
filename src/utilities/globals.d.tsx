@@ -5,7 +5,7 @@ declare module "*.svg";
 declare module 'organism-react-asciidoc' {
   export default function Asciidoc(props: React.PropsWithChildren<{
     onLoadDelay?: number,
-    inlineCSS?: React.CSSProperties,
+    inlineCSS?: string | React.CSSProperties,
     js?: string,
     css?: string,
     npmVersion?: string,

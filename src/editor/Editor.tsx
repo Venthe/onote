@@ -11,6 +11,7 @@ import { PageContext, CurrentlyEditingStateContext } from '../components/context
 import { Page } from '../page/Page';
 import { Drawer } from './debug/Drawer';
 import { Ribbon } from './ribbon/ribbon';
+import { ThemeContext } from '../components/context/themeContext';
 
 export const Editor = (props: { toasterId: string, pluginManager: PluginManager, setDebug: Dispatch<SetStateAction<boolean>> }) => {
   const page = useContext(PageContext)
@@ -20,9 +21,11 @@ export const Editor = (props: { toasterId: string, pluginManager: PluginManager,
   const editorContext = { scale: 1 }
 
   const commandRegistry = useContext(CommandRegistryContext)
+  const themeContext = useContext(ThemeContext)
 
   useMemo(() => commandRegistry.registerCommand("debug.toggleDebug", () => props.setDebug(d => !d)), [])
   useMemo(() => commandRegistry.registerCommand("debug.drawer.open", () => setIsDebugDrawerOpen(true)), [])
+  useMemo(() => commandRegistry.registerCommand("debug.setTheme", (data) => themeContext.setTheme(data)), [])
 
   return (
     <>

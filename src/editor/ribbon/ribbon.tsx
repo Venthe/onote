@@ -45,17 +45,13 @@ export const Ribbon = ({ ...props }: RibbonProps) => {
 
   const panels = props.tabs
     .filter(element => element.id === selectedTabId)
-    .map(element => (
+    .map(({Toolbar, ...element}) => (
       <div className="ribbon__panel" key={element.id} role="tabpanel">
-        {
-          element.toolbar({
-            actionCallback: commands.actionCallback,
-            debug,
-            translate,
-            isApplicable: key => commandRegistry.isApplicable(key),
-            isEnabled: key => commandRegistry.isEnabled(key)
-          })
-        }
+        <Toolbar actionCallback={commands.actionCallback}
+          debug={debug}
+          translate={translate}
+          isApplicable={key => commandRegistry.isApplicable(key)}
+          isEnabled={key => commandRegistry.isEnabled(key)} />
       </div>
     ));
 
@@ -83,16 +79,18 @@ export type RibbonElement = {
   id: string;
   name: string;
   icon?: JSX.Element;
-  toolbar: RibbonElementToolbar
+  Toolbar: RibbonElementToolbar
 };
 
-export type RibbonElementToolbar = (props: PropsWithChildren<{
+export type RibbonElementToolbarProps = {
   debug: boolean;
   actionCallback: ActionCallback;
   translate: TranslationFunction;
   isApplicable: (commandKey: string) => boolean;
   isEnabled: (commandKey: string) => boolean;
-}>) => JSX.Element;
+};
+
+export type RibbonElementToolbar = (props: RibbonElementToolbarProps) => JSX.Element;
 // #endregion Types
 
 function provideTabs(tabs: RibbonElement[], translate: TranslationFunction) {

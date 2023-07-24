@@ -67,6 +67,7 @@ export const Outline = forwardRef<{ getHeight: () => number }, IOutlineProps>(({
 
   const startEdit: MouseEventHandler<any> = (e) => {
     if (editable) return
+    if (e.ctrlKey) return
     e.stopPropagation()
     e.preventDefault()
     if (currentlyEditing) {
@@ -78,7 +79,7 @@ export const Outline = forwardRef<{ getHeight: () => number }, IOutlineProps>(({
   const handleHoverOut = () => setHover(false);
 
   return (
-    <div className="outline__position-origin outline" data-v-position={id}>
+    <div className="outline__position-origin outline" data-v-position={id} style={{ pointerEvents: currentlyEditing ? "none" : "auto" }}>
       <div onMouseEnter={handleHoverIn} onMouseLeave={handleHoverOut} className={`outline__container ${editable && "outline__container--selected"} ${showOutline && "outline__container--hover"}`}>
         <div onMouseDown={startDrag} className={`outline__title-container ${editable && "outline__title-container--selected"} ${showOutline && "outline__title-container--hover"}`}>
           <span onMouseDown={startResize} className={`outline__resize-handle ${editable && "outline__resize-handle--selected"} ${showOutline && "outline__resize-handle--hover"}`} />

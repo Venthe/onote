@@ -7,7 +7,7 @@ import { IOutline, IOutlineMetadata } from "../../page/outline/Outline"
 
 type PartialOutline = Partial<Omit<IOutline, "metadata">> & { metadata?: Partial<IOutlineMetadata> }
 export type StartEdit = (id: string) => void
-export type CreateOutline = (outline: IOutline) => string
+export type CreateOutline = (outline: IOutline) => string | undefined
 export type Commit = (id: string) => void
 export type DirtyChange = (id: string, outline: PartialOutline) => void
 
@@ -99,6 +99,8 @@ export const DocumentContextProvider = (props: PropsWithChildren<{ page?: IPage,
   }, [props.page])
 
   const createOutline = useCallback<CreateOutline>((o) => {
+    if (dirtyOutlines.current) return
+
     const outline = clone(o)
     console.group("createOutline")
     const id = uuid.v4()

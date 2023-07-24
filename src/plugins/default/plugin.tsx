@@ -19,12 +19,12 @@ export const DefaultDocumentSupport: DocumentSupportPlugin = {
     ]
   },
   toolbarElements: [
-    { name: "ribbon.tab.home.name", toolbar: HomeToolbar },
-    { name: "ribbon.tab.insert.name", toolbar: InsertToolbar },
-    { name: "ribbon.tab.draw.name", toolbar: DrawToolbar },
-    { name: "ribbon.tab.history.name", toolbar: HistoryToolbar },
-    { name: "ribbon.tab.review.name", toolbar: ReviewToolbar },
-    { name: "ribbon.tab.view.name", toolbar: ViewToolbar },
-    { name: "ribbon.tab.help.name", toolbar: HelpToolbar }
+    { name: "ribbon.tab.home.name", Toolbar: HomeToolbar },
+    { name: "ribbon.tab.insert.name", Toolbar: InsertToolbar },
+    { name: "ribbon.tab.draw.name", Toolbar: DrawToolbar },
+    { name: "ribbon.tab.history.name", Toolbar: HistoryToolbar },
+    { name: "ribbon.tab.review.name", Toolbar: ReviewToolbar },
+    { name: "ribbon.tab.view.name", Toolbar: ViewToolbar },
+    { name: "ribbon.tab.help.name", Toolbar: HelpToolbar }
   ]
 }

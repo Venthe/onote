@@ -62,7 +62,7 @@ export const CommandContextProvider = (props: PropsWithChildren<CommandContextPr
 
     if (command.type === "editorAction") {
       const cmd = command as EditorActionCommandDefinition
-      cmd.action();
+      cmd.action(data);
     } else if (command.type === "replaceText") {
       const cmd = command as ReplaceTextActionDefinition
       replaceTextCallback.current?.(cmd.selection ?? 'selection')(cmd.action)
@@ -104,7 +104,7 @@ export const CommandContextProvider = (props: PropsWithChildren<CommandContextPr
   )
 }
 
-const editorAction: (commandKey: string, action: () => void) => EditorActionCommandDefinition = (commandKey, action) => ({ type: 'editorAction', commandKey, action })
+const editorAction: (commandKey: string, action: (data: any) => void) => EditorActionCommandDefinition = (commandKey, action) => ({ type: 'editorAction', commandKey, action })
 
 // TODO: Add commands with AST
 export type OnoteDocument = { a?: string }
@@ -119,7 +119,7 @@ type IsApplicableProps = {
 export type IsApplicable = (props: IsApplicableProps) => boolean;
 export type CommandType = "replaceText" | "editorAction"
 export type ReplaceTextAction = (text: string | undefined, props?: Record<string, string>) => string
-export type EditorAction = () => void
+export type EditorAction = (data: any) => void
 export type CommandDefinition<T extends CommandType, U extends object = object, PROPS = unknown> = {
   commandKey: string
   type: T

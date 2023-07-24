@@ -2,18 +2,20 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import { reportWebVitals } from './reportWebVitals'
-import { FluentProvider, webDarkTheme } from '@fluentui/react-components';
+import { FluentProvider, webDarkTheme, webLightTheme } from '@fluentui/react-components';
 import { App } from './App';
+import { ThemeContextProvider } from './components/context/themeContext';
 
 const rootElement = document.getElementById('root')
 if (!rootElement) throw new Error();
 const root = ReactDOM.createRoot(rootElement);
+
 root.render(
   // When developing in “Strict Mode”, React calls each component’s function twice, which can help surface mistakes caused by impure functions.
   <React.StrictMode>
-    <FluentProvider theme={webDarkTheme}>
+    <ThemeContextProvider theme={webDarkTheme}>
       <App />
-    </FluentProvider>
+    </ThemeContextProvider>
   </React.StrictMode>
 );
 
