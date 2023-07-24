@@ -1,4 +1,11 @@
 {
+  "ribbon.tab.home.name": "Home",
+  "ribbon.tab.insert.name": "Insert",
+  "ribbon.tab.draw.name": "Draw",
+  "ribbon.tab.history.name": "History",
+  "ribbon.tab.review.name": "Review",
+  "ribbon.tab.view.name": "View",
+  "ribbon.tab.help.name": "Help",
   "ribbon.home.clipboard.partition.name": "Clipboard",
   "ribbon.home.basicText.partition.name": "Basic text",
   "ribbon.home.styles.partition.name": "Styles",

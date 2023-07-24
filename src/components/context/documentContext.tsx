@@ -38,6 +38,8 @@ export const DocumentContextProvider = (props: PropsWithChildren<{ page?: IPage,
   const [currentlyEditingState, setCurrentlyEditingState] = useState<{ id: string, documentType: string | undefined } | undefined>(undefined)
   const dirtyOutlines = useRef<(PartialOutline & Id) | undefined>(undefined)
 
+  // FIXME: Sometimes, blank outline is created while original outline is still editted.
+  //  commiting will remove original outline
   const commit = useCallback<Commit>((id) => {
     if (!dirtyOutlines.current) {
       console.warn(`Can't commit outline ${id}. Outline has no changes`)
@@ -68,15 +70,6 @@ export const DocumentContextProvider = (props: PropsWithChildren<{ page?: IPage,
         }
       }
     }
-
-    // // FIXME: Why it is needed?
-    // // for (const el = pageClone.outlines ?? []) { }
-
-    // (Object.keys(pageClone.outlines).map(key => ({key, ...pageClone.outlines[key]}))).forEach(element => {
-    //   if (element.content.trim().length === 0) {
-    //     delete pageClone.outlines[element.key]
-    //   }
-    // });
 
     props.onCommit?.(pageClone)
     dirtyOutlines.current = undefined

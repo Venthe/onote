@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import { reportWebVitals } from './reportWebVitals'
 import { FluentProvider, webDarkTheme } from '@fluentui/react-components';
-import { Editor } from './editor/Editor';
+import { App } from './App';
 
 const rootElement = document.getElementById('root')
 if (!rootElement) throw new Error();
@@ -12,7 +12,7 @@ root.render(
   // When developing in “Strict Mode”, React calls each component’s function twice, which can help surface mistakes caused by impure functions.
   <React.StrictMode>
     <FluentProvider theme={webDarkTheme}>
-      <Editor />
+      <App />
     </FluentProvider>
   </React.StrictMode>
 );

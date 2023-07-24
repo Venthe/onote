@@ -40,14 +40,7 @@ export const Ribbon = ({ ...props }: RibbonProps) => {
     setSelectedTabId(tabId);
   }, [selectedTabId]);
 
-  // const hasCommand = (key: string) => {
-  //   // console.trace("Ribbon", "hasCommand", key, props.commands, props.metadata)
-  //   return !(props.commands ?? [])
-  //     .filter(cmd => cmd.type === props.metadata?.outline?.type)
-  //     .filter(cmd => cmd.key === key)[0];
-  // }
-
-  const tabs = provideTabs(props.tabs);
+  const tabs = provideTabs(props.tabs, translate);
 
   const panels = props.tabs
     .filter(element => element.id === selectedTabId)
@@ -97,12 +90,12 @@ export type RibbonElementToolbar = (props: PropsWithChildren<{
 }>) => JSX.Element;
 // #endregion Types
 
-function provideTabs(tabs: RibbonElement[]) {
+function provideTabs(tabs: RibbonElement[], translate: TranslationFunction) {
   return tabs.map((tab) => {
     const icon = tab.icon ? { icon: (<span>{tab.icon}</span>) } : {};
 
     return (
-      <Tab key={tab.id} value={tab.id} {...icon}>{tab.name}</Tab>
+      <Tab key={tab.id} value={tab.id} {...icon}>{translate(tab.name)}</Tab>
     );
   });
 }
