@@ -10,16 +10,18 @@ type RibbonSplitButtonProps = {
 
 export const RibbonSplitButton = (props: PropsWithChildren<RibbonSplitButtonProps>) => {
   const executeAction = { onClick: () => props.actionCallback?.(props.commandKey) }
+  const isDisabled = !props.isApplicable(props.commandKey)
 
   return (
     <Menu positioning="below-start">
       <MenuTrigger disableButtonEnhancement>
         {(triggerProps: MenuButtonProps) => (
           <SplitButton primaryActionButton={executeAction}
+            disabled={isDisabled}
             className="ribbon-split-button"
             appearance='subtle'
             menuButton={triggerProps}
-            icon={props.icon}/>
+            icon={props.icon} />
         )}
       </MenuTrigger>
 

@@ -13,9 +13,11 @@ type RibbonButtonProps = {
 export const RibbonButton = (props: RibbonButtonProps) => {
   const { name, ariaAttribute } = nameWithAriaTranslation(props.translationKey, props.translate)
   const executeAction = () => props.actionCallback(props.commandKey);
-  
+  const isDisabled = !props.isApplicable(props.commandKey)
+
   return <Button
     onClick={executeAction}
+    disabled={isDisabled}
     appearance="subtle"
     name={name}
     value={name}

@@ -26,9 +26,13 @@ export const CommandContext = createContext<{
 export const CommandRegistryContext = createContext<{
   registerCommand: RegisterCommand,
   registerReplaceTextCallback: (callback: ReplaceText) => void
+  isApplicable: (actionKey: string) => boolean
+  isEnabled: (actionKey: string) => boolean
 }>({
   registerCommand: undefinedCallback("Register command"),
-  registerReplaceTextCallback: undefinedCallback("Register replace text")
+  registerReplaceTextCallback: undefinedCallback("Register replace text"),
+  isApplicable: undefinedCallback("Is applicable"),
+  isEnabled: undefinedCallback("Is editable")
 })
 
 export const CommandContextProvider = (props: PropsWithChildren<CommandContextProviderProps>) => {
@@ -42,7 +46,11 @@ export const CommandContextProvider = (props: PropsWithChildren<CommandContextPr
     ...(props.commands ?? [])
   ];
 
-  const provideApplicableProps = useCallback<() => IsApplicableProps>(() => ({ isEditing: !!currentlyEditing, documentType: currentlyEditing?.documentType, selection: window.getSelection() ?? undefined }), [currentlyEditing])
+  const provideApplicableProps = useCallback<() => IsApplicableProps>(() => ({
+    isEditing: !!currentlyEditing,
+    documentType: currentlyEditing?.documentType,
+    selection: window.getSelection() ?? undefined
+  }), [currentlyEditing])
 
   const registerCommand: RegisterCommand = useCallback((key, action) => additionalCommands.current[key] = editorAction(key, action), [])
   const actionCallback: ActionCallback = useCallback((key, data) => {
@@ -67,8 +75,25 @@ export const CommandContextProvider = (props: PropsWithChildren<CommandContextPr
     return replaceTextCallback.current = callback;
   }
 
+  const isApplicable = useCallback((commandKey: string) => {
+    const command = commands.filter(command => command.commandKey === commandKey)
+      .filter(command => command.isApplicable?.(provideApplicableProps()) ?? true)[0]
+    return !!command
+  }, [commands, currentlyEditing])
+
+  const isEnabled = useCallback((commandKey: string) => {
+    const command = commands.filter(command => command.commandKey === commandKey)
+      .filter(command => command.isEnabled?.(provideApplicableProps()) ?? false)[0]
+    return !!command
+  }, [commands, currentlyEditing])
+
   return (
-    <CommandRegistryContext.Provider value={{ registerCommand, registerReplaceTextCallback }}>
+    <CommandRegistryContext.Provider value={{
+      isApplicable,
+      registerCommand,
+      registerReplaceTextCallback,
+      isEnabled
+    }}>
       <CommandContext.Provider value={{
         notificationCallback: props.notificationCallback ?? undefinedCallback("Notification"),
         actionCallback
@@ -81,8 +106,11 @@ export const CommandContextProvider = (props: PropsWithChildren<CommandContextPr
 
 const editorAction: (commandKey: string, action: () => void) => EditorActionCommandDefinition = (commandKey, action) => ({ type: 'editorAction', commandKey, action })
 
+// TODO: Add commands with AST
+export type OnoteDocument = { a?: string }
+
 type IsApplicableProps = {
-  document?: any;
+  document?: OnoteDocument;
   selection?: Selection;
   documentType?: string;
   isEditing: boolean;
@@ -96,7 +124,8 @@ export type CommandDefinition<T extends CommandType, U extends object = object, 
   commandKey: string
   type: T
   action: U,
-  isApplicable?: IsApplicable
+  isApplicable?: IsApplicable,
+  isEnabled?: IsApplicable
 } & PROPS
 
 export type EditorActionCommandDefinition = CommandDefinition<"editorAction", EditorAction>

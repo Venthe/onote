@@ -43,7 +43,7 @@ export const MarkdownSupport: DocumentSupportPlugin = {
       type: "replaceText",
       selection: "selection",
       commandKey: "home.basicText.italic",
-      action: (text) => ignoringWhitespaceSelectionHelper(text, (v: string) => `*${v}*`)
+      action: (text) => ignoringWhitespaceSelectionHelper(text, (v: string) => `_${v}_`)
     }
   ]
 }

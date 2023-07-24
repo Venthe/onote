@@ -17,7 +17,7 @@ import "./home.scss"
 
 export const HomeToolbar: RibbonElementToolbar = (props) => {
   const commonRibbonElements = toCommonRibbonElement(props)
-  
+
   return (
     <Toolbar>
       <RibbonTabPartition {...commonRibbonElements} translationKey="ribbon.home.clipboard.partition">
@@ -57,18 +57,18 @@ export const HomeToolbar: RibbonElementToolbar = (props) => {
                 </MenuList>
               </RibbonSplitButton>
               <RibbonToolbarDivider />
-              <RibbonButton {...commonRibbonElements} commandKey="home.basicText.indent.decrease" translationKey="ribbon.home.basicText.action.indent.decrease" icon={<TextIndentDecrease20Filled />}/>
-              <RibbonButton {...commonRibbonElements} commandKey="home.basicText.indent.increase" translationKey="ribbon.home.basicText.action.indent.increase" icon={<TextIndentIncrease20Filled />}/>
+              <RibbonButton {...commonRibbonElements} commandKey="home.basicText.indent.decrease" translationKey="ribbon.home.basicText.action.indent.decrease" icon={<TextIndentDecrease20Filled />} />
+              <RibbonButton {...commonRibbonElements} commandKey="home.basicText.indent.increase" translationKey="ribbon.home.basicText.action.indent.increase" icon={<TextIndentIncrease20Filled />} />
               <RibbonToolbarDivider />
-              <RibbonButton {...commonRibbonElements} commandKey="home.basicText.clearFormatting" translationKey="ribbon.home.basicText.action.clearFormatting" icon={<ClearFormatting20Filled />}/>
+              <RibbonButton {...commonRibbonElements} commandKey="home.basicText.clearFormatting" translationKey="ribbon.home.basicText.action.clearFormatting" icon={<ClearFormatting20Filled />} />
             </Toolbar>
           </RibbonTabGroup>
           <RibbonTabGroup debug={commonRibbonElements.debug} height={1}>
             <Toolbar>
-              <RibbonToggleButton {...commonRibbonElements} commandKey="home.basicText.bold" translationKey="ribbon.home.basicText.action.bold" icon={<Bold20Filled />}/>
-              <RibbonToggleButton {...commonRibbonElements} commandKey="home.basicText.italic" translationKey="ribbon.home.basicText.action.italic" icon={<Italics20Filled />}/>
-              <RibbonToggleButton {...commonRibbonElements} commandKey="home.basicText.underline" translationKey="ribbon.home.basicText.action.underline" icon={<Underline20Filled />}/>
-              <RibbonToggleButton {...commonRibbonElements} commandKey="home.basicText.strikethrough" translationKey="ribbon.home.basicText.action.strikethrough" icon={<Strikethrough20Filled />}/>
+              <RibbonToggleButton {...commonRibbonElements} commandKey="home.basicText.bold" translationKey="ribbon.home.basicText.action.bold" icon={<Bold20Filled />} />
+              <RibbonToggleButton {...commonRibbonElements} commandKey="home.basicText.italic" translationKey="ribbon.home.basicText.action.italic" icon={<Italics20Filled />} />
+              <RibbonToggleButton {...commonRibbonElements} commandKey="home.basicText.underline" translationKey="ribbon.home.basicText.action.underline" icon={<Underline20Filled />} />
+              <RibbonToggleButton {...commonRibbonElements} commandKey="home.basicText.strikethrough" translationKey="ribbon.home.basicText.action.strikethrough" icon={<Strikethrough20Filled />} />
               <RibbonSplitButton {...commonRibbonElements} commandKey="home.basicText.subscript" icon={<Subscript20Filled />}>
                 <MenuList>
                   <MenuItem><Subscript20Filled /> Subscript</MenuItem>
@@ -99,7 +99,7 @@ export const HomeToolbar: RibbonElementToolbar = (props) => {
                 </MenuList>
               </RibbonSplitButton>
               <RibbonToolbarDivider />
-              <RibbonButton {...commonRibbonElements} commandKey="home.basicText.delete" translationKey="ribbon.home.basicText.action.delete" icon={<TextDelete20Filled />}/>
+              <RibbonButton {...commonRibbonElements} commandKey="home.basicText.delete" translationKey="ribbon.home.basicText.action.delete" icon={<TextDelete20Filled />} />
             </Toolbar>
           </RibbonTabGroup>
         </RibbonTabGroup>
@@ -166,10 +166,12 @@ const FontSelector = (props: FontSelectorProps) => {
 
   const currentValue = useRef({ face: fontFaceOptions[0], size: fontSizeOptions[0] })
   const execute = () => props.actionCallback(props.commandKey, currentValue.current)
+  const isDisabled = !props.isApplicable(props.commandKey)
 
   return (
     <>
       <Combobox
+        disabled={isDisabled}
         size="small"
         className="font-selector__face"
         defaultSelectedOptions={[currentValue.current.face]}
@@ -182,6 +184,7 @@ const FontSelector = (props: FontSelectorProps) => {
         ))}
       </Combobox>
       <Combobox
+        disabled={isDisabled}
         size="small"
         className="font-selector__size"
         defaultSelectedOptions={[currentValue.current.size]}

@@ -4,7 +4,7 @@ import {
   TabList,
 } from "@fluentui/react-components";
 import "./ribbon.scss"
-import { ActionCallback, CommandContext } from '../../components/context/commandContext';
+import { ActionCallback, CommandContext, CommandRegistryContext } from '../../components/context/commandContext';
 import { DebugContext } from '../../components/context/editorContext';
 import { hide } from '../../utilities/styles';
 import { TranslationContext, TranslationFunction } from '../../components/context/translationContext';
@@ -27,6 +27,7 @@ export interface RibbonProps {
 export const Ribbon = ({ ...props }: RibbonProps) => {
   const debug = useContext(DebugContext) ?? false;
   const commands = useContext(CommandContext);
+  const commandRegistry = useContext(CommandRegistryContext);
   const translate = useContext(TranslationContext)
 
   const [selectedTabId, setSelectedTabId] = useState(props.tabs[0]?.id);
@@ -50,7 +51,9 @@ export const Ribbon = ({ ...props }: RibbonProps) => {
           element.toolbar({
             actionCallback: commands.actionCallback,
             debug,
-            translate
+            translate,
+            isApplicable: key => commandRegistry.isApplicable(key),
+            isEnabled: key => commandRegistry.isEnabled(key)
           })
         }
       </div>
@@ -87,6 +90,8 @@ export type RibbonElementToolbar = (props: PropsWithChildren<{
   debug: boolean;
   actionCallback: ActionCallback;
   translate: TranslationFunction;
+  isApplicable: (commandKey: string) => boolean;
+  isEnabled: (commandKey: string) => boolean;
 }>) => JSX.Element;
 // #endregion Types
 

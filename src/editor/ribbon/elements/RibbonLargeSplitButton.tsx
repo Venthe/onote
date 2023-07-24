@@ -13,12 +13,14 @@ type RibbonLargeSplitButtonProps = {
 export const RibbonLargeSplitButton = ({ children, ...props }: PropsWithChildren<RibbonLargeSplitButtonProps>) => {
   const { name } = nameWithAriaTranslation(props.translationKey, props.translate)
   const executeAction = { onClick: () => props.actionCallback?.(props.commandKey) }
+  const isDisabled = !props.isApplicable(props.commandKey)
 
   return (
     <Menu positioning="below-end">
       <MenuTrigger disableButtonEnhancement>
         {(triggerProps: MenuButtonProps) => (
           <SplitButton className={styles.button}
+            disabled={isDisabled}
             size="large"
             primaryActionButton={executeAction}
             appearance='subtle'

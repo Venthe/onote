@@ -32,4 +32,10 @@ export class PluginManager {
   }
 }
 
-export const toCommonRibbonElement = (props: CommonRibbonElementProps) => ({ actionCallback: props.actionCallback, translate: props.translate, debug: props.debug })
+export const toCommonRibbonElement = (props: CommonRibbonElementProps) => ({
+  actionCallback: props.actionCallback,
+  translate: props.translate,
+  debug: props.debug,
+  isApplicable: props.isApplicable,
+  isEnabled: props.isEnabled
+})

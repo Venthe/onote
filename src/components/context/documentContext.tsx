@@ -34,6 +34,7 @@ export const DirtyOutlineCommandsContext = createContext<DirtyOutlineCommands>({
 
 export const CurrentlyEditingStateContext = createContext<{ id: string, documentType: string | undefined } | undefined>(undefined)
 
+// TODO: Undo/redo
 export const DocumentContextProvider = (props: PropsWithChildren<{ page?: IPage, onCommit?: (page: IPage) => void }>) => {
   const [currentlyEditingState, setCurrentlyEditingState] = useState<{ id: string, documentType: string | undefined } | undefined>(undefined)
   const dirtyOutlines = useRef<(PartialOutline & Id) | undefined>(undefined)
