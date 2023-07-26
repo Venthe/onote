@@ -1,4 +1,4 @@
-import React, { useRef, MutableRefObject, useContext, useLayoutEffect, useCallback, useMemo } from "react"
+import React, { useRef, MutableRefObject, useContext, useLayoutEffect, useCallback, useMemo, useEffect } from "react"
 import { ReplaceText, Replacer, TextSelectionOptions } from "../../Page"
 import { CommandRegistryContext } from "../../../components/context/commandContext";
 import { MousePosition } from "../../../components/context/editorContext";
@@ -22,11 +22,12 @@ export const EditableRenderer = (props: EditableRendererProps) => {
 
   const initialSelectionDone = useRef(false)
   const mousePosition = useContext(MousePosition);
+
   useLayoutEffect(() => {
-    if (!inputRef.current || initialSelectionDone) return
+    if (!inputRef.current || initialSelectionDone.current) return
     inputRef.current?.focus()
     usePlaceCaretNearCursor(initialSelectionDone, mousePosition, inputRef);
-  })
+  }, [])
 
   const handleChange = (data: string) => {
     // console.debug("EditableRenderer", "handleChange");

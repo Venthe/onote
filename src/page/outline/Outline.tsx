@@ -16,10 +16,16 @@ import { Renderer } from './renderers/Renderer';
 import { CurrentlyEditingStateContext, DirtyOutlineCommandsContext } from '../../components/context/documentContext';
 import { DragContext } from '../../components/context/dragContext';
 import { DebugContext } from '../../components/context/editorContext';
+import { FileUpload } from '../../components/components/FileUpload';
+
+export type IAttachments = {
+  [key: string]: string;
+};
 
 export interface IOutline {
   content: string
   metadata: IOutlineMetadata
+  attachments?: IAttachments
 }
 
 export interface IOutlineMetadata {
@@ -79,27 +85,43 @@ export const Outline = forwardRef<{ getHeight: () => number }, IOutlineProps>(({
   const handleHoverOut = () => setHover(false);
 
   return (
-    <div className="outline__position-origin outline" data-v-position={id} style={{ pointerEvents: currentlyEditing ? "none" : "auto" }}>
-      <div onMouseEnter={handleHoverIn} onMouseLeave={handleHoverOut} className={`outline__container ${editable && "outline__container--selected"} ${showOutline && "outline__container--hover"}`}>
-        <div onMouseDown={startDrag} className={`outline__title-container ${editable && "outline__title-container--selected"} ${showOutline && "outline__title-container--hover"}`}>
-          <span onMouseDown={startResize} className={`outline__resize-handle ${editable && "outline__resize-handle--selected"} ${showOutline && "outline__resize-handle--hover"}`} />
+    <>
+      <div className="outline__position-origin outline" data-v-position={id} style={{ pointerEvents: currentlyEditing && !dragged && !editable && !resized ? "none" : "auto" }}>
+
+        <div onMouseEnter={handleHoverIn} onMouseLeave={handleHoverOut} className={`outline__container ${editable && "outline__container--selected"} ${showOutline && "outline__container--hover"}`}>
+          <div onMouseDown={startDrag} className={`outline__title-container ${editable && "outline__title-container--selected"} ${showOutline && "outline__title-container--hover"}`}>
+            <span onMouseDown={startResize} className={`outline__resize-handle ${editable && "outline__resize-handle--selected"} ${showOutline && "outline__resize-handle--hover"}`} />
+          </div>
+          <div onMouseDown={startResize} className={`outline__resize ${debug && "outline__resize--debug"}`}></div>
+          <div onMouseDownCapture={startEdit}
+            ref={contentRef}
+            className="outline__content"
+            data-v-width={id}>
+            <Renderer content={props.outline.content}
+              editableRenderers={props.editableRenderers}
+              readOnlyRenderers={props.readOnlyRenderers}
+              editable={!dragged && !resized && editable}
+              onDirtyChange={content => props.onDirtyChange?.({ content })}
+              type={props.outline.metadata.type} />
+          </div>
+          <FileUpload enabled={editable} handleFiles={(files) => {
+            console.log("Upload", files)
+            function getBase64(file: File) {
+              return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+              });
+            }
+            const parsed = Array.from(files ?? []).map(file => getBase64(file))
+            Promise.all(parsed).then(data => console.log(data))
+          }} />
+          {(debug && showOutline) && <DebugInfo className="outline__debug-info-container"
+            {...{ isDragged: dragged, isResized: resized, editable, box: { ...({ left: position.current.x, top: position.current.y }), width: width.current }, type: props.outline.metadata.type }} />}
         </div>
-        <div onMouseDown={startResize} className={`outline__resize ${debug && "outline__resize--debug"}`}></div>
-        <div onMouseDownCapture={startEdit}
-          ref={contentRef}
-          className="outline__content"
-          data-v-width={id}>
-          <Renderer content={props.outline.content}
-            editableRenderers={props.editableRenderers}
-            readOnlyRenderers={props.readOnlyRenderers}
-            editable={!dragged && !resized && editable}
-            onDirtyChange={content => props.onDirtyChange?.({ content })}
-            type={props.outline.metadata.type} />
-        </div>
-        {(debug && showOutline) && <DebugInfo className="outline__debug-info-container"
-          {...{ isDragged: dragged, isResized: resized, editable, box: { ...({ left: position.current.x, top: position.current.y }), width: width.current }, type: props.outline.metadata.type }} />}
-      </div >
-    </div>
+      </div>
+    </>
   );
 })
 Outline.displayName = "Outline"
