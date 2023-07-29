@@ -1,0 +1,68 @@
+name: Markdown
+fileTypes:
+  - md
+  - mdown
+  - markdown
+  - markdn
+scope: markdown.text
+uuid: fbb7fb42-bfbe-4510-84ff-450716b2883f
+patterns:
+  - include: "#bold"
+  - alternatives:
+      - include: "#heading"
+      - include: "#paragraph"
+repository:
+  paragraph:
+    scope: markdown.paragraph
+    match: $[ ]{0,3}
+  bold:
+    scope: markdown.bold.markup
+    alternatives:
+      - include: "#bold_asterisks"
+      - include: "#bold_underline"
+  bold_underline:
+    begin: "__"
+    beginCaptures:
+      0:
+        name: markdown.bold.punctuation
+    end: "__"
+    endCaptures:
+      0:
+        name: markdown.bold.punctuation
+    patterns:
+      - scope: markdown.bold.markup
+        match: .*
+  bold_asterisks:
+    begin: "**"
+    beginCaptures:
+      0:
+        name: markdown.bold.punctuation
+    end: "**"
+    endCaptures:
+      0:
+        name: markdown.bold.punctuation
+    patterns:
+      - scope: markdown.bold.markup
+        match: .*
+  heading:
+    scope: markdown.heading.markup
+    match: ^[ ]{0,3}(#{1,6})\s+(.*)$
+    captures:
+      0:
+        patterns:
+          - scope: markdown.heading.1
+            match: "^[ ]{0,3}#{1}"
+          - scope: markdown.heading.2
+            match: "^[ ]{0,3}#{2}"
+          - scope: markdown.heading.3
+            match: "^[ ]{0,3}#{3}"
+          - scope: markdown.heading.4
+            match: "^[ ]{0,3}#{4}"
+          - scope: markdown.heading.5
+            match: "^[ ]{0,3}#{5}"
+          - scope: markdown.heading.6
+            match: "^[ ]{0,3}#{6}"
+      1:
+        name: markdown.heading.punctuation
+      2:
+        name: markdown.heading.name

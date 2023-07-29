@@ -1,0 +1,106 @@
+- description: Simple bold
+  grammar: markdown.text
+  input: >
+    Text **in bold**
+  tokenizedOutput:
+    - line: Text **in bold**
+      tokens:
+        - startIndex: 0
+          endIndex: 5
+          scopes:
+            - markdown.text
+            - markdown.paragraph
+        - startIndex: 5
+          endIndex: 7
+          scopes:
+            - markdown.text
+            - markdown.paragraph
+            - markdown.bold.punctuation
+            - markdown.bold.markup
+        - startIndex: 7
+          endIndex: 14
+          scopes:
+            - markdown.text
+            - markdown.paragraph
+            - markdown.bold.markup
+        - startIndex: 14
+          endIndex: 16
+          scopes:
+            - markdown.text
+            - markdown.paragraph
+            - markdown.bold.punctuation
+            - markdown.bold.markup
+  highlightedOutput: >
+    <div class="markdown-text markdown-paragraph">Text <strong class="markdown-bold-markup">in bold</strong><div>
+- description: Multiline bold
+  grammar: markdown.text
+  input: |
+    Text **in
+    bold**
+  tokenizedOutput:
+    - line: Text **in
+      tokens:
+        - startIndex: 0
+          endIndex: 5
+          scopes:
+            - markdown.text
+            - markdown.paragraph
+        - startIndex: 5
+          endIndex: 7
+          scopes:
+            - markdown.text
+            - markdown.paragraph
+            - markdown.bold.punctuation
+            - markdown.bold.markup
+        - startIndex: 7
+          endIndex: 9
+          scopes:
+            - markdown.text
+            - markdown.paragraph
+            - markdown.bold.markup
+    - line: bold**
+      tokens:
+        - startIndex: 0
+          endIndex: 4
+          scopes:
+            - markdown.text
+            - markdown.paragraph
+            - markdown.bold.markup
+        - startIndex: 4
+          endIndex: 5
+          scopes:
+            - markdown.text
+            - markdown.paragraph
+            - markdown.bold.punctuation
+            - markdown.bold.markup
+  highlightedOutput: >
+    <div class="markdown-text markdown-paragraph">Text <strong class="markdown-bold-markup">in</br>bold</strong><div>
+- description: Header 1
+  grammar: markdown.text
+  input: >
+    # header
+  tokenizedOutput:
+    - line: "# header"
+      tokens:
+        - startIndex: 0
+          endIndex: 1
+          scopes:
+            - markdown.text
+            - markdown.heading.markup
+            - markdown.heading.1
+            - markdown.heading.punctuation
+        - startIndex: 1
+          endIndex: 2
+          scopes:
+            - markdown.text
+            - markdown.heading.markup
+            - markdown.heading.1
+        - startIndex: 2
+          endIndex: 8
+          scopes:
+            - markdown.text
+            - markdown.heading.markup
+            - markdown.heading.1
+            - markdown.heading.name
+  highlightedOutput: >
+    <h1 class="markdown-text markdown-heading-markup">header<div>
