@@ -23,6 +23,7 @@
             - markdown.text
             - markdown.paragraph
             - markdown.bold.markup
+            - markdown.bold.content
         - startIndex: 14
           endIndex: 16
           scopes:
@@ -104,3 +105,38 @@
             - markdown.heading.name
   highlightedOutput: >
     <h1 class="markdown-text markdown-heading-markup">header<div>
+- description: Simple paragraph
+  grammar: markdown.text
+  input: >
+    Text
+  tokenizedOutput:
+    - line: Text
+      tokens:
+        - startIndex: 0
+          endIndex: 4
+          scopes:
+            - markdown.text
+            - markdown.paragraph
+  highlightedOutput: >
+    <div class="markdown-text markdown-paragraph">Text<div>
+- description: Empty paragraph
+  grammar: markdown.text
+  input: ""
+  tokenizedOutput:
+    - line: ""
+      tokens: []
+  highlightedOutput: >
+    <div class="markdown-text markdown-paragraph"><div>
+- description: Blank paragraph
+  grammar: markdown.text
+  input: " "
+  tokenizedOutput:
+    - line: " "
+      tokens:
+        - startIndex: 0
+          endIndex: 1
+          scopes:
+            - markdown.text
+            - markdown.paragraph
+  highlightedOutput: >
+    <div class="markdown-text markdown-paragraph"> <div>

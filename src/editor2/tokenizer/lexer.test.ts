@@ -1,7 +1,6 @@
 // @ts-nocheck
 
-import { buildGrammar } from "./_archive/markdownGrammar";
-import { Tokenizer } from "./tokenizer";
+import { Lexer } from "./lexer";
 import { Grammar } from "./types";
 import * as fs from 'fs'
 import * as path from 'path'
@@ -10,10 +9,10 @@ import * as yaml from 'js-yaml'
 const filenames = fs.readdirSync(path.join(__dirname, "./tests"))
 
 describe.each(filenames)("Tokenizer", (filename) => {
-  let tokenizer: Tokenizer;
+  let tokenizer: Lexer;
 
   beforeEach(() => {
-    tokenizer = new Tokenizer({ loadGrammar: grammarLoader });
+    tokenizer = new Lexer({ loadGrammar: grammarLoader });
   })
 
   const tests = loadTests(filename)
@@ -26,7 +25,7 @@ describe.each(filenames)("Tokenizer", (filename) => {
     tokenizer.loadGrammar(grammar)
 
     // when
-    const result = tokenize(input, tokenizer)
+    const result = tokenizer.parse({ data: input, fileType: "md" })
 
     // then
     expect(result).toEqual(output)
@@ -41,17 +40,6 @@ describe.each(filenames)("Tokenizer", (filename) => {
     throw new Error("Unsupported operation exception")
   })
 })
-
-const tokenize = (document: string, tokenizer: Tokenizer) => {
-  const lines = document.split(/\r?\n/)
-  const { result: result_ } = lines.reduce((accumulator, line) => {
-    const { ruleStack, ...result } = tokenizer.tokenizeLine(line, accumulator.stack)
-    accumulator.stack = ruleStack
-    accumulator.result.push(result)
-    return accumulator
-  }, { stack: undefined, result: [] })
-  return result_
-}
 
 function loadTests(filename: any) {
   return yaml.load(fs.readFileSync(path.join(__dirname, "./tests", filename), 'utf-8'));

@@ -9,9 +9,6 @@ export type Grammar = {
   /** This is an array of file type extensions that the grammar should (by default) be used with. This is referenced when TextMate does not know what grammar to use for a file the user opens. If however the user selects a grammar from the language pop-up in the status bar, TextMate will remember that choice. */
   fileTypes: string[]
 
-  /** This is an array with the actual rules used to parse the document. In this example there are two rules (line 6-8 and 9-17). Rules will be explained in the next section. */
-  patterns: LanguageRule[]
-
   /** a regular expression which is matched against the first line of the document (when it is first loaded). If it matches, the grammar is used for the document (unless there is a user override). Example: ^#!/.*\bruby\b. */
   firstLineMatch?: PlainTextRegexp
 
@@ -30,7 +27,7 @@ export type Grammar = {
   // FIXME: Why this key exists?
   /** Unknown purpose, from https://github.com/microsoft/vscode-markdown-tm-grammar/blob/main/markdown.tmLanguage.base.yaml */
   uuid?: string
-} & FoldingMarkers
+} & FoldingMarkers & Patterns
 
 /** these are regular expressions that lines (in the document) are matched against. If a line matches one of the patterns (but not both), it becomes a folding marker (see the foldings section for more info). */
 type FoldingMarkers = {
@@ -38,7 +35,14 @@ type FoldingMarkers = {
   foldingEndMarker: PlainTextRegexp
 }
 
-export type LanguageRule = SingleMatchLanguageRule | BeginEndLanguageRule | IncludeRule | BeginWhileLanguageRule
+export type Patterns = {
+  strategy?: "matchFirst" | "matchAll"
+
+  /** This is an array with the actual rules used to parse the document. In this example there are two rules (line 6-8 and 9-17). Rules will be explained in the next section. */
+  patterns: LanguageRule[]
+}
+
+export type LanguageRule = SingleMatchLanguageRule | BeginEndLanguageRule | IncludeRule | Grammar | Patterns
 
 /**
  * this allows you to reference a different language, recursively reference the grammar itself or a rule declared in this file’s repository.
@@ -92,20 +96,20 @@ export type LanguageRule = SingleMatchLanguageRule | BeginEndLanguageRule | Incl
  * 
  * This will correctly match a string like: qq( this (is (the) entire) string).
  */
-type IncludeRule = {
+export type IncludeRule = {
   include: string
 }
 
 /** single regular expression, or two. As with the match key in the first rule above (lines 6-8), everything which matches that regular expression will then get the name specified by that rule. For example the first rule above assigns the name keyword.control.untitled to the following keywords: if, while, for and return. We can then use a scope selector of keyword.control to have our theme style these keywords. */
-type SingleMatchLanguageRule = {
+export type SingleMatchLanguageRule = {
   /** a regular expression which is used to identify the portion of text to which the name should be assigned. Example: '\b(true|false)\b'. */
   match: PlainTextRegexp
-} & CommonLanguageRule & SingleMatchCaptures
+} & LanguageRuleBase & SingleMatchCaptures
 
 /** The other type of match is the one used by the second rule (lines 9-17). Here two regular expressions are given using the begin and end keys. The name of the rule will be assigned from where the begin pattern matches to where the end pattern matches (including both matches). If there is no match for the end pattern, the end of the document is used.
 
 In this latter form, the rule can have sub-rules which are matched against the part between the begin and end matches. In our example here we match strings that start and end with a quote character and escape characters are marked up as constant.character.escape.untitled inside the matched strings (line 13-15). */
-type BeginEndLanguageRule = {
+export type BeginEndLanguageRule = {
   /** these keys allow matches which span several lines and must both be mutually exclusive with the match key. Each is a regular expression pattern. begin is the pattern that starts the block and end is the pattern which ends the block. Captures from the begin pattern can be referenced in the end pattern by using normal regular expression back-references. This is often used with here-docs, for example:
 
   {   name = 'string.unquoted.here-doc';
@@ -115,19 +119,20 @@ type BeginEndLanguageRule = {
   */
   begin: PlainTextRegexp
   end: PlainTextRegexp
-  patterns: LanguageRule[]
-} & CommonLanguageRule & BeginEndCaptures
-
-type BeginWhileLanguageRule = {
-  begin: PlainTextRegexp
-  while: PlainTextRegexp
-  patterns: LanguageRule[]
-} & CommonLanguageRule & BeginEndCaptures
+} & LanguageRuleBase & BeginEndCaptures & Partial<Patterns>
 
 /** A language rule is responsible for matching a portion of the document. Generally a rule will specify a name which gets assigned to the part of the document which is matched by that rule. */
-type CommonLanguageRule = {
+interface LanguageRuleBase {
   /** the name which gets assigned to the portion matched. This is used for styling and scope-specific settings and actions, which means it should generally be derived from one of the standard names (see naming conventions later). */
-  name: string
+  scopeName: string
+}
+
+/** these keys allow you to assign attributes to the captures of the match, begin, or end patterns. Using the captures key for a begin/end rule is short-hand for giving both beginCaptures and endCaptures with same values.
+
+The value of these keys is a dictionary with the key being the capture number and the value being a dictionary of attributes to assign to the captured text. Currently name is the only attribute supported. Here is an example: */
+type BeginEndCaptures = {
+  beginCaptures?: Capture
+  endCaptures?: Capture
 
   /** this key is similar to the name key but only assigns the name to the text between what is matched by the begin/end patterns. For example to get the text between #if 0 and #endif marked up as a comment, we would do:
 
@@ -135,38 +140,44 @@ type CommonLanguageRule = {
       contentName = 'comment.block.preprocessor';
   };
   */
-  contentName: string
-}
-
-/** these keys allow you to assign attributes to the captures of the match, begin, or end patterns. Using the captures key for a begin/end rule is short-hand for giving both beginCaptures and endCaptures with same values.
-
-The value of these keys is a dictionary with the key being the capture number and the value being a dictionary of attributes to assign to the captured text. Currently name is the only attribute supported. Here is an example: */
-type BeginEndCaptures = {
-  beginCaptures: unknown
-  endCaptures: unknown
+  contentScope?: string
 }
 
 type BeginWhileCaptures = {
-  beginCaptures: unknown
-  whileCaptures: unknown
+  beginCaptures?: Capture
+  whileCaptures?: Capture
 }
 
 type SingleMatchCaptures = {
-  captures: unknown
+  captures?: Capture
 }
 
-type Capture = {
-  [key: number]: { name: string }
+export type NamedCapture = {
+  name: string
+}
+
+export type Capture = {
+  [key: number]: NamedCapture | Patterns
 }
 
 type PlainTextRegexp = string
 
-export type RuleStack = unknown
+export interface Context {
+  activeScopes: string[]
+  markScopeBegin(params: { scope: string; indices: [number, number]; contentScope?: string }): void
+  markScopeEnd(params: { scope: string }): void
+  isScopeOpen(scope: string): boolean;
+
+}
 
 export type TokenizationResult = {
   line: string
   tokens: Token[]
-  ruleStack: RuleStack
+}
+
+export type ParsingResult = {
+  line: string
+  tokens: Token[]
 }
 
 export type Token = {
