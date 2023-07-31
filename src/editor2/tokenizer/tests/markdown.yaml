@@ -1,6 +1,6 @@
 - description: Simple bold
   grammar: markdown.text
-  input: >
+  input: >-
     Text **in bold**
   tokenizedOutput:
     - line: Text **in bold**
@@ -78,7 +78,7 @@
     <div class="markdown-text markdown-paragraph">Text <strong class="markdown-bold-markup">in</br>bold</strong><div>
 - description: Header 1
   grammar: markdown.text
-  input: >
+  input: >-
     # header
   tokenizedOutput:
     - line: "# header"
@@ -107,7 +107,7 @@
     <h1 class="markdown-text markdown-heading-markup">header<div>
 - description: Simple paragraph
   grammar: markdown.text
-  input: >
+  input: >-
     Text
   tokenizedOutput:
     - line: Text

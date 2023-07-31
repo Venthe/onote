@@ -157,7 +157,7 @@ export type NamedCapture = {
 }
 
 export type Capture = {
-  [key: number]: NamedCapture | Patterns
+  [key: number]: NamedCapture | LanguageRule
 }
 
 type PlainTextRegexp = string

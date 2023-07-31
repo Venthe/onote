@@ -42,10 +42,28 @@ export class Lexer {
 
     lines.forEach((line, index) => {
       const tokenizationResult = this.tokenizeLine({ line, lineNumber: index, pattern: grammar, startIndex: 0, parentGrammarScope: grammar.scopeName }, context)
-      result.push({ ...tokenizationResult })
+      const deduplicatedTokens = this.deduplicateScopes(tokenizationResult.tokens);
+      // TODO: Simplify scopes to be non-overlapping
+      result.push({ line, tokens: deduplicatedTokens })
     })
 
     return result
+  }
+
+  private deduplicateScopes(tokens: TextMate.Token[]): TextMate.Token[] {
+    const dedupedTokens: Record<string, TextMate.Token> = {}
+
+    tokens.forEach(token => {
+      const tokenKey = `${token.startIndex}-${token.endIndex}`
+
+      if (!dedupedTokens[tokenKey]) {
+        dedupedTokens[tokenKey] = token
+      } else {
+        token.scopes.forEach(scope => dedupedTokens[tokenKey].scopes.push(scope))
+      }
+    })
+
+    return Object.keys(dedupedTokens).flatMap(key => dedupedTokens[key])
   }
 
   private pickGrammarScopeForDocument(document: Document): TextMate.Grammar | undefined {
@@ -56,7 +74,6 @@ export class Lexer {
   }
 
   private tokenizeLine(tokenizationData: TokenizationData, context: TextMate.Context): TextMate.TokenizationResult {
-
     switch (true) {
       case this.isSingleMatch(tokenizationData.pattern):
         return this.handleSingleMatchRule(tokenizationData as TokenizationData<TextMate.SingleMatchLanguageRule>, context);
@@ -83,33 +100,38 @@ export class Lexer {
     }
 
     const tokens: TextMate.Token[] = matchedData
-      .map((match, index) => {
+      .flatMap((match, index) => {
         const startIndex = this.safeGetIndex(matchedData, index)[0];
         const endIndex = this.safeGetIndex(matchedData, index)[1];
-        return ({
-          scopes: [pattern.scopeName, ...this.mapPatternCapture({ ...tokenizationData, line, pattern, startIndex, endIndex }, index, context, pattern.captures)],
+        const patternCapture = this.mapPatternCapture({ ...tokenizationData, line: line.substring(startIndex, endIndex), pattern, startIndex, endIndex }, index, context, pattern.captures);
+        return ([{
+          scopes: [pattern.scopeName],
           startIndex: startIndex,
           endIndex: endIndex
-        });
+        }, ...patternCapture]);
       }) || [];
     return { line, tokens }
   }
 
-  private mapPatternCapture(tokenizationData: TokenizationData<TextMate.SingleMatchLanguageRule>, index: number, context: TextMate.Context, capture?: TextMate.Capture): string[] {
+  private mapPatternCapture(tokenizationData: TokenizationData<TextMate.SingleMatchLanguageRule>, index: number, context: TextMate.Context, capture?: TextMate.Capture): TextMate.Token[] {
     const thisCapture = capture?.[index];
     if (!thisCapture) {
       return []
     }
 
-    if ((thisCapture as TextMate.NamedCapture).name) {
-      return [(thisCapture as TextMate.NamedCapture).name]
-    } else if ((thisCapture as TextMate.Patterns).patterns) {
-      const result = this.handleRuleWithPatterns({ ...tokenizationData, pattern: (thisCapture as TextMate.Patterns) }, context);
-      // TODO: It properly maps to TextMate.TokenizationResult
-      throw new Error("Method not implemented");
-    }
+    if (!tokenizationData.endIndex) throw new Error("End index should be marked")
 
-    throw new Error("Invalid capture definition. " + capture)
+    if ((thisCapture as TextMate.NamedCapture).name) {
+      return [{ scopes: [(thisCapture as TextMate.NamedCapture).name], startIndex: tokenizationData.startIndex, endIndex: tokenizationData.endIndex }]
+    } else {
+      const tokenizedLine = this.tokenizeLine({ ...tokenizationData, pattern: (thisCapture as TextMate.LanguageRule) }, context);
+      return tokenizedLine.tokens
+        .map(token => ({
+          ...token,
+          startIndex: token.startIndex + tokenizationData.startIndex,
+          endIndex: token.endIndex + tokenizationData.startIndex
+        }));
+    }
   }
 
   private safeGetIndex(matchedData: RegExpExecArray, index: number): [number, number] {
@@ -126,6 +148,7 @@ export class Lexer {
     return (pattern as TextMate.BeginEndLanguageRule).begin !== undefined && (pattern as TextMate.BeginEndLanguageRule).end !== undefined
   }
 
+  // TODO: Implement
   private handleBeginEndRule({ line, pattern, ...props }: TokenizationData<TextMate.BeginEndLanguageRule>, context: TextMate.Context): TextMate.TokenizationResult {
     // const matchedData = new RegExp(pattern.begin, "id").exec(line)
 
