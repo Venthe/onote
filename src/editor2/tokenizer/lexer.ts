@@ -13,7 +13,8 @@ interface TokenizationData<T extends TextMate.LanguageRule = TextMate.LanguageRu
   startIndex: number;
   endIndex?: number;
   pattern: T;
-  parentGrammarScope: string;
+  grammarScope: string;
+  scopes: string[];
 };
 
 export class Lexer {
@@ -29,7 +30,7 @@ export class Lexer {
       .forEach(grammar => this.grammars[grammar.scopeName] = new Grammar(grammar))
   }
 
-  parse({ data: document, fileType }: Document) {
+  parse({ data: document, fileType }: Document): TextMate.TokenizationResult[] {
     const grammar = this.pickGrammarScopeForDocument({ data: document, fileType })
 
     if (!grammar) {
@@ -41,29 +42,14 @@ export class Lexer {
     const context = Lexer.INITIAL_CONTEXT
 
     lines.forEach((line, index) => {
-      const tokenizationResult = this.tokenizeLine({ line, lineNumber: index, pattern: grammar, startIndex: 0, parentGrammarScope: grammar.scopeName }, context)
+      const tokenizationResult = this.tokenizeLine({ line, lineNumber: index, pattern: grammar, startIndex: 0, grammarScope: grammar.scopeName, scopes: [grammar.scopeName] }, context)
       const deduplicatedTokens = this.deduplicateScopes(tokenizationResult.tokens);
+      const mappedTokens = this.mapTokensToContiguous(line, deduplicatedTokens)
       // TODO: Simplify scopes to be non-overlapping
-      result.push({ line, tokens: deduplicatedTokens })
+      result.push({ line, tokens: mappedTokens })
     })
 
     return result
-  }
-
-  private deduplicateScopes(tokens: TextMate.Token[]): TextMate.Token[] {
-    const dedupedTokens: Record<string, TextMate.Token> = {}
-
-    tokens.forEach(token => {
-      const tokenKey = `${token.startIndex}-${token.endIndex}`
-
-      if (!dedupedTokens[tokenKey]) {
-        dedupedTokens[tokenKey] = token
-      } else {
-        token.scopes.forEach(scope => dedupedTokens[tokenKey].scopes.push(scope))
-      }
-    })
-
-    return Object.keys(dedupedTokens).flatMap(key => dedupedTokens[key])
   }
 
   private pickGrammarScopeForDocument(document: Document): TextMate.Grammar | undefined {
@@ -105,7 +91,7 @@ export class Lexer {
         const endIndex = this.safeGetIndex(matchedData, index)[1];
         const patternCapture = this.mapPatternCapture({ ...tokenizationData, line: line.substring(startIndex, endIndex), pattern, startIndex, endIndex }, index, context, pattern.captures);
         return ([{
-          scopes: [pattern.scopeName],
+          scopes: [pattern.scopeName, ...tokenizationData.scopes],
           startIndex: startIndex,
           endIndex: endIndex
         }, ...patternCapture]);
@@ -195,7 +181,7 @@ export class Lexer {
   }
 
   private handleIncludeRule(tokenizationData: TokenizationData<TextMate.IncludeRule>, context: TextMate.Context): TextMate.TokenizationResult {
-    const resolvedPattern = this.resolveInclude((tokenizationData.pattern as TextMate.IncludeRule).include, tokenizationData.parentGrammarScope);
+    const resolvedPattern = this.resolveInclude((tokenizationData.pattern as TextMate.IncludeRule).include, tokenizationData.grammarScope);
     return this.tokenizeLine({ ...tokenizationData, pattern: resolvedPattern }, context);
   }
 
@@ -230,5 +216,55 @@ export class Lexer {
     }
 
     return grammar.repository[includeKey]
+  }
+
+  private deduplicateScopes(tokens: TextMate.Token[]): TextMate.Token[] {
+    const dedupedTokens: Record<string, TextMate.Token> = {}
+
+    tokens.forEach(token => {
+      const tokenKey = `${token.startIndex}-${token.endIndex}`
+
+      if (!dedupedTokens[tokenKey]) {
+        dedupedTokens[tokenKey] = token
+      } else {
+        token.scopes.forEach(scope => dedupedTokens[tokenKey].scopes.push(scope))
+      }
+    })
+
+    return Object.keys(dedupedTokens)
+      .flatMap(key => dedupedTokens[key])
+      .map(token => ({ ...token, scopes: this.deduplicate(token.scopes) }))
+  }
+
+  private mapTokensToContiguous(line: string, tokens: TextMate.Token[]): TextMate.Token[] {
+    const resultObject: Record<string, TextMate.Token> = {}
+    let index = 0;
+    for (let i = 0; i < line.length; i++) {
+      const tokensForIndex = tokens.filter(token => token.startIndex <= i && token.endIndex > i)
+      const currentScopes = this.deduplicate(tokensForIndex.flatMap(token => token.scopes));
+
+      if (resultObject[index] !== undefined && this.xor(resultObject[index]?.scopes ?? [], currentScopes).length > 0) {
+        index++;
+      }
+
+      resultObject[index] = resultObject[index] === undefined
+        ? { startIndex: i, endIndex: i + 1, scopes: currentScopes }
+        : { ...resultObject[index], endIndex: i + 1, scopes: this.deduplicate([...currentScopes, ...resultObject[index].scopes]) }
+    }
+
+    const result = Object.keys(resultObject)
+      .map(key => resultObject[key])
+      .sort((a, b) => a.startIndex - b.startIndex);
+    return result;
+  }
+
+  private deduplicate<T>(array: T[]): T[] {
+    return [...new Set(array)]
+  }
+
+  private xor<T>(array1: T[], array2: T[]): T[] {
+    let a = this.deduplicate(array1);
+    let b = this.deduplicate(array2);
+    return this.deduplicate([...a.filter(a_ => !b.includes(a_)), ...b.filter(b_ => !a.includes(b_))]);
   }
 }
