@@ -21,6 +21,7 @@ import { PageContext, DirtyOutlineCommandsContext, CurrentlyEditingStateContext 
 import { DebugContext } from '../components/context/editorContext';
 import { useAspectRatio } from '../components/hooks/useAspectRatio';
 import { useMousePosition } from '../components/hooks/useMousePosition';
+import { Button, isButton } from '../utilities/mouse';
 
 export type TextSelectionOptions = "selection" | "caret" | "paragraph"
 export type SelectionAfterAction = "caret" | "wrap";
@@ -87,6 +88,10 @@ export const Page = (props: PageProps) => {
   };
   const handleViewportClick: MouseEventHandler<HTMLDivElement> = (e) => {
     if (e.target !== e.currentTarget) return;
+    if (isButton(e.buttons, Button.AUXILLARY_BUTTON)) {
+      console.debug("MMB pressed, stopping")
+      return
+    }
 
     if (currentlyEditing) {
       documentCommands?.commit(currentlyEditing.id)

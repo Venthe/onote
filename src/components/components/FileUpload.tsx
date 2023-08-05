@@ -28,16 +28,18 @@ export const FileUpload = (props: { enabled?: boolean, handleFiles?: (files: Fil
     }
   };
 
+  // FIXME: Span the whole box only on drag
   return (
     <>
-      <form onDragEnter={handleDrag} onSubmit={(e) => e.preventDefault()}>
+      {/* <form onDragEnter={handleDrag} onSubmit={(e) => e.preventDefault()}>
         <input id={id} type="file" className={styles.inputFileUpload} multiple={true} onChange={handleChange} />
       </form>
       <div className={styles.dragFileElement}
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
         onDragOver={handleDrag}
-        onDrop={handleDrop} />
+        onDrop={handleDrop}
+      /> */}
     </>
   );
 }

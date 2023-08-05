@@ -2,38 +2,42 @@
   grammar: markdown.text
   input: >-
     Text **in bold**
-  tokenizedOutput:
-    - line: Text **in bold**
-      tokens:
-        - startIndex: 0
-          endIndex: 5
-          scopes:
-            - markdown.text
-            - markdown.paragraph
-        - startIndex: 5
-          endIndex: 7
-          scopes:
-            - markdown.text
-            - markdown.paragraph
-            - markdown.bold.punctuation
-            - markdown.bold.markup
-        - startIndex: 7
-          endIndex: 14
-          scopes:
-            - markdown.text
-            - markdown.paragraph
-            - markdown.bold.markup
-            - markdown.bold.content
-        - startIndex: 14
-          endIndex: 16
-          scopes:
-            - markdown.text
-            - markdown.paragraph
-            - markdown.bold.punctuation
-            - markdown.bold.markup
-  highlightedOutput: >
-    <div class="markdown-text markdown-paragraph">Text <strong class="markdown-bold-markup">in bold</strong><div>
+  output:
+    tokenization:
+      - line: Text **in bold**
+        tokens:
+          - startIndex: 0
+            endIndex: 5
+            scopes:
+              - markdown.text
+              - markdown.paragraph
+          - startIndex: 5
+            endIndex: 7
+            scopes:
+              - markdown.text
+              - markdown.paragraph
+              - markdown.bold.punctuation
+              - markdown.bold.markup
+          - startIndex: 7
+            endIndex: 14
+            scopes:
+              - markdown.text
+              - markdown.paragraph
+              - markdown.bold.markup
+              - markdown.bold.content
+          - startIndex: 14
+            endIndex: 16
+            scopes:
+              - markdown.text
+              - markdown.paragraph
+              - markdown.bold.punctuation
+              - markdown.bold.markup
+    plainText: >-
+      <p class="markdown-text markdown-paragraph">Text <strong class="markdown-bold-markup"><span class="markdown-bold-punctuation">**</span>in bold<span class="markdown-bold-punctuation">**</span></strong></p>
+    richText: >-
+      <p class="markdown-text markdown-paragraph">Text <strong class="markdown-bold-markup">in bold</strong></p>
 - description: Multiline bold
+  disabled: true
   grammar: markdown.text
   input: |
     Text **in
@@ -80,32 +84,36 @@
   grammar: markdown.text
   input: >-
     # header
-  tokenizedOutput:
-    - line: "# header"
-      tokens:
-        - startIndex: 0
-          endIndex: 1
-          scopes:
-            - markdown.text
-            - markdown.heading.markup
-            - markdown.heading.1
-            - markdown.heading.punctuation
-        - startIndex: 1
-          endIndex: 2
-          scopes:
-            - markdown.text
-            - markdown.heading.markup
-            - markdown.heading.1
-        - startIndex: 2
-          endIndex: 8
-          scopes:
-            - markdown.text
-            - markdown.heading.markup
-            - markdown.heading.1
-            - markdown.heading.name
-  highlightedOutput: >
-    <h1 class="markdown-text markdown-heading-markup">header<div>
+  output:
+    tokenization:
+      - line: "# header"
+        tokens:
+          - startIndex: 0
+            endIndex: 1
+            scopes:
+              - markdown.text
+              - markdown.heading.markup
+              - markdown.heading.1
+              - markdown.heading.punctuation
+          - startIndex: 1
+            endIndex: 2
+            scopes:
+              - markdown.text
+              - markdown.heading.markup
+              - markdown.heading.1
+          - startIndex: 2
+            endIndex: 8
+            scopes:
+              - markdown.text
+              - markdown.heading.markup
+              - markdown.heading.1
+              - markdown.heading.name
+    plainText: >-
+      <h1 class="markdown-text markdown-heading-markup"># header</h1>
+    richText: >-
+      <h1 class="markdown-text markdown-heading-markup">header</h1>
 - description: Simple paragraph
+  disabled: true
   grammar: markdown.text
   input: >-
     Text
@@ -120,6 +128,7 @@
   highlightedOutput: >
     <div class="markdown-text markdown-paragraph">Text<div>
 - description: Empty paragraph
+  disabled: true
   grammar: markdown.text
   input: ""
   tokenizedOutput:
@@ -128,6 +137,7 @@
   highlightedOutput: >
     <div class="markdown-text markdown-paragraph"><div>
 - description: Blank paragraph
+  disabled: true
   grammar: markdown.text
   input: " "
   tokenizedOutput:

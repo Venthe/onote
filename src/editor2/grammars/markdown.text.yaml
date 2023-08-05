@@ -27,12 +27,12 @@ repository:
     endCaptures:
       0:
         name: markdown.bold.punctuation
-    name: markdown.bold.markup
+    scopeName: markdown.bold.markup
     contentName: markdown.bold.content
   bold_asterisks:
     begin: \*\*
     end: \*\*
-    name: markdown.bold.markup
+    scopeName: markdown.bold.markup
     contentName: markdown.bold.content
     beginCaptures:
       0:

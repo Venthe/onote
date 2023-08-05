@@ -17,6 +17,7 @@ import { CurrentlyEditingStateContext, DirtyOutlineCommandsContext } from '../..
 import { DragContext } from '../../components/context/dragContext';
 import { DebugContext } from '../../components/context/editorContext';
 import { FileUpload } from '../../components/components/FileUpload';
+import { Button, isButton } from '../../utilities/mouse';
 
 export type IAttachments = {
   [key: string]: string;
@@ -73,7 +74,12 @@ export const Outline = forwardRef<{ getHeight: () => number }, IOutlineProps>(({
 
   const startEdit: MouseEventHandler<any> = (e) => {
     if (editable) return
+    // To allow handling links
     if (e.ctrlKey) return
+    if (isButton(e.buttons, Button.AUXILLARY_BUTTON)) {
+      console.debug("MMB pressed, stopping")
+      return
+    }
     e.stopPropagation()
     e.preventDefault()
     if (currentlyEditing) {

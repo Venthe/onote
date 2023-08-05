@@ -46,23 +46,23 @@ export type LanguageRule = SingleMatchLanguageRule | BeginEndLanguageRule | Incl
 
 /**
  * this allows you to reference a different language, recursively reference the grammar itself or a rule declared in this file’s repository.
- * 
+ *
  * To reference another language, use the scope name of that language:
- * 
+ *
  *  {  begin = '<\?(php|=)?'; end = '\?>'; patterns = (
  *        { include = "source.php"; }
  *     );
  *  }
- * 
+ *
  * To reference the grammar itself, use $self:
- * 
+ *
  *  {  begin = '\('; end = '\)'; patterns = (
  *        { include = "$self"; }
  *     );
  *  }
- * 
+ *
  * To reference a rule from the current grammars repository, prefix the name with a pound sign (#):
- * 
+ *
  *  patterns = (
  *     {  begin = '"'; end = '"'; patterns = (
  *           { include = "#escaped-char"; },
@@ -75,9 +75,9 @@ export type LanguageRule = SingleMatchLanguageRule | BeginEndLanguageRule | Incl
  *     escaped-char = { match = '\\.'; };
  *     variable =     { match = '\$[a-zA-Z0-9_]+'; };
  *  };
- * 
+ *
  * This can also be used to match recursive constructs like balanced characters:
- * 
+ *
  *  patterns = (
  *     {  name = 'string.unquoted.qq.perl';
  *        begin = 'qq\('; end = '\)'; patterns = (
@@ -93,7 +93,7 @@ export type LanguageRule = SingleMatchLanguageRule | BeginEndLanguageRule | Incl
  *        );
  *     };
  *  };
- * 
+ *
  * This will correctly match a string like: qq( this (is (the) entire) string).
  */
 export type IncludeRule = {
@@ -143,11 +143,6 @@ type BeginEndCaptures = {
   contentScope?: string
 }
 
-type BeginWhileCaptures = {
-  beginCaptures?: Capture
-  whileCaptures?: Capture
-}
-
 type SingleMatchCaptures = {
   captures?: Capture
 }
@@ -157,18 +152,10 @@ export type NamedCapture = {
 }
 
 export type Capture = {
-  [key: number]: NamedCapture | LanguageRule
+  [key: number]: NamedCapture | Patterns
 }
 
 type PlainTextRegexp = string
-
-export interface Context {
-  activeScopes: string[]
-  markScopeBegin(params: { scope: string; indices: [number, number]; contentScope?: string }): void
-  markScopeEnd(params: { scope: string }): void
-  isScopeOpen(scope: string): boolean;
-
-}
 
 export type TokenizationResult = {
   line: string
@@ -185,3 +172,5 @@ export type Token = {
   endIndex: number
   scopes: string[]
 }
+
+export type RegExpMatchArrayWithIndices = RegExpMatchArray & { indices: Array<[number, number]> };
