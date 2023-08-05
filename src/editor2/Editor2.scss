@@ -1,0 +1,30 @@
+.fileLine {
+  transition: all 0.1s linear;
+
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.3);
+  }
+}
+
+.editor2.markdownColorizer {
+  .markdown {
+    &.heading {
+      &._1 {
+        font-size: 2rem;
+      }
+
+      &._2 {
+        font-size: 1.7rem;
+      }
+
+      &._3 {
+        font-size: 1.5rem;
+      }
+    }
+
+    &.quote {
+      color: darkgreen;
+    }
+  }
+}
+

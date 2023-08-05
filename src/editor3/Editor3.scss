@@ -1,0 +1,10 @@
+.wysiwyg-document {
+  &__fragment {
+    &:focus {
+      outline: none;
+    }
+  }
+
+  &__root {
+  }
+}

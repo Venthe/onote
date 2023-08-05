@@ -38,6 +38,7 @@ export type ReadOnlyRendererProps = {
 
 export type EditableRendererProps = {
   content: string;
+  type?: string
   onChange?: (content: string) => void;
 };
 export type EditableRenderer<T extends HTMLElement> = (props: EditableRendererProps, ref: MutableRefObject<T>) => JSX.Element;

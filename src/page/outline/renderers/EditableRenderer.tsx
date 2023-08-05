@@ -50,7 +50,7 @@ export const EditableRenderer = (props: EditableRendererProps) => {
 
   const Renderer = pickRenderer(props)
   if (!Renderer) return <>No editable renderer avialable for type {props.type}</>
-  return <Renderer {...{ ref: inputRef, onChange: handleChange, content: initialContent.current }}></Renderer>
+  return <Renderer {...{ ref: inputRef, onChange: handleChange, content: initialContent.current, type: props.type }}/>
 }
 
 const pickRenderer = (props: EditableRendererProps & { type?: string | undefined; editableRenderers?: IEditableRenderer[] | undefined; onDirtyChange?: ((c: string) => void) | undefined; onEditStop?: (() => void) | undefined; }) =>

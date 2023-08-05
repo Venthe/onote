@@ -1,0 +1,15 @@
+.visual-editor {
+  &:focus {
+    outline: none;
+  }
+
+  cursor: text;
+
+  .text {
+    &.markup {
+      &.selection {
+        outline: 1px solid yellow;
+      }
+    }
+  }
+}
