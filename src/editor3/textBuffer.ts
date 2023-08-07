@@ -8,6 +8,7 @@ export class TextBuffer implements Iterable<string | undefined> {
   private readonly original: string
   private added = ""
   private pieces: BufferPiece[] = [];
+  private history: Change[] = []
 
   private static readonly outOfBoundsError = () => new Error("Index out of bounds");
 
@@ -58,6 +59,7 @@ export class TextBuffer implements Iterable<string | undefined> {
 
     if (originalPiece.length === bufferOffset) {
       this.pieces.push(bufferPieceAdd(addedOffset, textLength))
+      this.history.push({originalPieces: [], indices: [this.pieces.length - 1, this.pieces.length]})
       return;
     }
 
@@ -74,6 +76,7 @@ export class TextBuffer implements Iterable<string | undefined> {
         length: originalPiece.length - (bufferOffset - originalPiece.offset)
       }
     ].filter(piece => piece.length > 0)
+    this.history.push({originalPieces: [{...originalPiece}], indices: [pieceIndex, replacedPieces.length]})
     this.pieces.splice(pieceIndex, 1, ...replacedPieces);
   }
 
@@ -103,12 +106,14 @@ export class TextBuffer implements Iterable<string | undefined> {
       const piece = this.pieces[initialAffectedPieceIndex];
       // Is the delete at the beginning of the piece?
       if (initialBufferOffset === piece.offset) {
+        this.history.push({originalPieces: [{...piece}], indices: [initialAffectedPieceIndex, 1]})
         piece.offset += length;
         piece.length -= length;
         return;
       }
       // Or at the end of the piece?
       else if (finalBufferOffset === piece.offset + piece.length) {
+        this.history.push({originalPieces: [{...piece}], indices: [initialAffectedPieceIndex, 1]})
         piece.length -= length;
         return;
       }
@@ -126,6 +131,7 @@ export class TextBuffer implements Iterable<string | undefined> {
         length: this.pieces[finalAffectedPieceIndex].length - (finalBufferOffset - this.pieces[finalAffectedPieceIndex].offset)
       }].filter(piece => piece.length > 0);
 
+    this.history.push({originalPieces: this.pieces.filter((e, i) => initialAffectedPieceIndex<=i && finalAffectedPieceIndex>=i).map(el => ({...el})), indices: [initialAffectedPieceIndex, deletePieces.length]})
     this.pieces.splice(initialAffectedPieceIndex, finalAffectedPieceIndex - initialAffectedPieceIndex + 1, ...deletePieces);
   }
 
@@ -191,15 +197,30 @@ export class TextBuffer implements Iterable<string | undefined> {
     }
     return str === "" ? undefined : str;
   }
+
+  undo(number = 1) {
+    if (number <= 0) return
+
+    const historyElement = this.history.pop()
+    if (historyElement === undefined) return;
+
+    this.pieces.splice(...historyElement.indices, ...historyElement.originalPieces)
+
+    this.undo(number - 1)
+  }
+
+  redo(number = 1) {
+    throw new Error("Unsupp")
+  }
 }
 
-interface BufferPiece {
+type BufferPiece = {
   bufferType: BufferType;
   offset: number;
   length: number;
 }
 
-const bufferPieceOriginal = (span: string)  => ({
+const bufferPieceOriginal = (span: string) => ({
   bufferType: BufferType.Original,
   offset: 0,
   length: span.length
@@ -217,4 +238,9 @@ enum BufferType {
    */
   Original,
   Added
+}
+
+type Change = {
+  originalPieces: BufferPiece[]
+  indices: [number, number]
 }
