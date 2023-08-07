@@ -33,6 +33,352 @@ describe("TextBuffer", () => {
     })
   })
 
+  describe("Undo", () => {
+    describe("insert", () => {
+      describe("at the end of the piece", () => {
+        it("Single character insert", () => expectSameDocument((buffer, document) => {
+          buffer.insert(".", document.length)
+          buffer.undo()
+        }))
+
+        it("Insert two times, undo manually two times", () => {
+          const buffer = new TextBuffer("Lorem ipsum dolor sit amet")
+
+          buffer.insert(".", 26)
+          buffer.insert(".", 27)
+          buffer.undo()
+          buffer.undo()
+
+          expect(buffer.print()).toEqual("Lorem ipsum dolor sit amet")
+        })
+
+        it("Insert two times, bulk undo two times", () => {
+          const buffer = new TextBuffer("Lorem ipsum dolor sit amet")
+
+          buffer.insert(".", 26)
+          buffer.insert(".", 27)
+          buffer.undo(2)
+
+          expect(buffer.print()).toEqual("Lorem ipsum dolor sit amet")
+        })
+      })
+      describe("at the beginning of the piece", () => {
+        it("1", () => {
+          const buffer = new TextBuffer("Lorem ipsum dolor sit amet")
+
+          buffer.insert(".", 0)
+          buffer.undo()
+
+          expect(buffer.print()).toEqual("Lorem ipsum dolor sit amet")
+        })
+
+        it("2", () => {
+          const buffer = new TextBuffer("Lorem ipsum dolor sit amet")
+
+          buffer.insert(".", 0)
+          buffer.insert(".", 0)
+          buffer.undo(2)
+
+          expect(buffer.print()).toEqual("Lorem ipsum dolor sit amet")
+        })
+
+        it("3", () => {
+          const buffer = new TextBuffer("Lorem ipsum dolor sit amet")
+
+          buffer.insert(".", 0)
+          buffer.insert(".", 0)
+          buffer.undo()
+          buffer.undo()
+
+          expect(buffer.print()).toEqual("Lorem ipsum dolor sit amet")
+        })
+      })
+      describe("in the middle of the piece", () => {
+        it("1", () => {
+          const buffer = new TextBuffer("Lorem ipsum dolor sit amet")
+
+          buffer.insert(".", 1)
+          buffer.undo()
+
+          expect(buffer.print()).toEqual("Lorem ipsum dolor sit amet")
+        })
+
+        it("2", () => {
+          const buffer = new TextBuffer("Lorem ipsum dolor sit amet")
+
+          buffer.insert(".", 1)
+          buffer.insert(".", 4)
+          buffer.undo(2)
+
+          expect(buffer.print()).toEqual("Lorem ipsum dolor sit amet")
+        })
+
+        it("3", () => {
+          const buffer = new TextBuffer("Lorem ipsum dolor sit amet")
+
+          buffer.insert(".", 1)
+          buffer.insert(".", 4)
+          buffer.undo()
+          buffer.undo()
+
+          expect(buffer.print()).toEqual("Lorem ipsum dolor sit amet")
+        })
+      })
+    })
+    describe("delete", () => {
+      describe("at the end of the piece", () => {
+        it("Single deletion", () => {
+          const buffer = new TextBuffer("Lorem ipsum dolor sit amet")
+
+          buffer.delete(25, 1)
+          buffer.undo()
+
+          expect(buffer.print()).toEqual("Lorem ipsum dolor sit amet")
+        })
+
+        it("Manual undo two deletions", () => {
+          const buffer = new TextBuffer("Lorem ipsum dolor sit amet")
+
+          buffer.delete(25, 1)
+          buffer.delete(24, 1)
+          buffer.undo()
+          buffer.undo()
+
+          expect(buffer.print()).toEqual("Lorem ipsum dolor sit amet")
+        })
+
+        it("Bulk undo two deletions", () => {
+          const buffer = new TextBuffer("Lorem ipsum dolor sit amet")
+
+          buffer.delete(25, 1)
+          buffer.delete(24, 1)
+          buffer.undo(2)
+
+          expect(buffer.print()).toEqual("Lorem ipsum dolor sit amet")
+        })
+      })
+      describe("at the beginning of the piece", () => {
+        it("Single deletion", () => expectSameDocument((buffer) => {
+          buffer.delete(0, 1)
+          buffer.undo()
+        }))
+        it("Manual undo two deletions", () => expectSameDocument((buffer) => {
+          buffer.delete(0, 1)
+          buffer.delete(0, 1)
+          buffer.undo()
+          buffer.undo()
+        }))
+        it("Bulk undo two deletions", () => expectSameDocument((buffer) => {
+          buffer.delete(0, 1)
+          buffer.delete(0, 1)
+          buffer.undo(2)
+        }))
+      })
+      describe("in the middle of the piece", () => {
+        it("Single deletion", () => expectSameDocument((buffer) => {
+          buffer.delete(1, 1)
+          buffer.undo()
+        }))
+        it("Manual undo two deletions", () => expectSameDocument((buffer) => {
+          buffer.delete(1, 1)
+          buffer.delete(1, 1)
+          buffer.undo()
+          buffer.undo()
+        }))
+        it("Bulk undo two deletions", () => expectSameDocument((buffer) => {
+          buffer.delete(1, 1)
+          buffer.delete(1, 1)
+          buffer.undo(2)
+        }))
+      })
+    })
+  })
+
+  describe("Redo", () => {
+    describe("Insert", () => {
+      describe("At the beginning of text", () => {
+        it("Redo single change", () => {
+          // given
+          const document = "Lorem ipsum dolor sit amet";
+          const buffer = new TextBuffer(document)
+          buffer.insert("Simon says: ", 0)
+          buffer.undo()
+
+          // when
+          buffer.redo()
+
+          // then
+          expect(buffer.print()).toEqual("Simon says " + document)
+        })
+        it("Manual redo of two changes", () => {
+          // given
+          const document = "Lorem ipsum dolor sit amet";
+          const buffer = new TextBuffer(document)
+          buffer.insert("Simon says: ", 0)
+          buffer.insert("Dorian says: ", 0)
+          buffer.undo()
+          buffer.undo()
+
+          // when
+          buffer.redo()
+          buffer.redo()
+
+          // then
+          expect(buffer.print()).toEqual("Simon says " + document)
+        })
+        it("Bulk redo of two changes", () => {
+          // given
+          const document = "Lorem ipsum dolor sit amet";
+          const buffer = new TextBuffer(document)
+          buffer.insert("Simon says: ", 0)
+          buffer.insert("Dorian says: ", 0)
+          buffer.undo()
+          buffer.undo()
+
+          // when
+          buffer.redo(2)
+
+          // then
+          expect(buffer.print()).toEqual("Simon says " + document)
+        })
+        it("Change, undo, change - redo does nothing", () => {
+          // given
+          const document = "Lorem ipsum dolor sit amet";
+          const buffer = new TextBuffer(document)
+          buffer.insert("Dorian says: ", 0)
+          buffer.undo()
+          buffer.insert("Simon says: ", 0)
+
+          // when
+          buffer.redo()
+
+          // then
+          expect(buffer.print()).toEqual("Simon says " + document)
+        })
+      })
+      describe("In the middle of text", () => {
+        it("Redo single change", () => {
+          // given
+          const document = "Lorem ipsum dolor sit amet";
+          const buffer = new TextBuffer(document)
+          buffer.insert("Simon says: ", 1)
+          buffer.undo()
+
+          // when
+          buffer.redo()
+
+          // then
+          expect(buffer.print()).toEqual(document[0] + "Simon says " + document.substring(1))
+        })
+        it("Manual redo of two changes", () => {
+          // given
+          const document = "Lorem ipsum dolor sit amet";
+          const buffer = new TextBuffer(document)
+          buffer.insert("Simon says: ", 1)
+          buffer.insert("Dorian says: ", 1)
+          buffer.undo()
+          buffer.undo()
+
+          // when
+          buffer.redo()
+          buffer.redo()
+
+          // then
+          expect(buffer.print()).toEqual(document[0] + "Simon says " + document.substring(1))
+        })
+        it("Bulk redo of two changes", () => {
+          // given
+          const document = "Lorem ipsum dolor sit amet";
+          const buffer = new TextBuffer(document)
+          buffer.insert("Simon says: ", 1)
+          buffer.insert("Dorian says: ", 1)
+          buffer.undo()
+          buffer.undo()
+
+          // when
+          buffer.redo(2)
+
+          // then
+          expect(buffer.print()).toEqual(document[0] + "Simon says " + document.substring(1))
+        })
+        it("Change, undo, change - redo does nothing", () => {
+          // given
+          const document = "Lorem ipsum dolor sit amet";
+          const buffer = new TextBuffer(document)
+          buffer.insert("Dorian says: ", 1)
+          buffer.undo()
+          buffer.insert("Simon says: ", 10)
+
+          // when
+          buffer.redo()
+
+          // then
+          expect(buffer.print()).toEqual(document[0] + "Simon says " + document.substring(1))
+        })
+      })
+      describe("At the end of text", () => {
+        it("Redo single change", () => {
+          // given
+          const document = "Lorem ipsum dolor sit amet";
+          const buffer = new TextBuffer(document)
+          buffer.insert(", Simon said", document.length)
+          buffer.undo()
+
+          // when
+          buffer.redo()
+
+          // then
+          expect(buffer.print()).toEqual(document + ", Simon said")
+        })
+        it("Manual redo of two changes", () => {
+          // given
+          const document = "Lorem ipsum dolor sit amet";
+          const buffer = new TextBuffer(document)
+          buffer.insert(", Simon said", document.length)
+          buffer.insert(", Dorian said", document.length)
+          buffer.undo()
+          buffer.undo()
+
+          // when
+          buffer.redo()
+          buffer.redo()
+
+          // then
+          expect(buffer.print()).toEqual(document + ", Simon said")
+        })
+        it("Bulk redo of two changes", () => {
+          // given
+          const document = "Lorem ipsum dolor sit amet";
+          const buffer = new TextBuffer(document)
+          buffer.insert(", Simon said", document.length)
+          buffer.insert(", Dorian said", document.length)
+          buffer.undo()
+          buffer.undo()
+
+          // when
+          buffer.redo(2)
+
+          // then
+          expect(buffer.print()).toEqual(document + ", Simon said")
+        })
+        it("Change, undo, change - redo does nothing", () => {
+          // given
+          const document = "Lorem ipsum dolor sit amet";
+          const buffer = new TextBuffer(document)
+          buffer.insert(", Dorian said", document.length)
+          buffer.undo()
+          buffer.insert(", Simon said", document.length)
+
+          // when
+          buffer.redo()
+
+          // then
+          expect(buffer.print()).toEqual(document + ", Simon said")
+        })
+      })
+    })
+  })
+
   describe("delete", () => {
     it("should delete at the beginning", () => {
       const buffer = new TextBuffer("Big brown fox has jumped over a lazy dog.")
@@ -81,7 +427,6 @@ describe("TextBuffer", () => {
     })
   })
 
-
   describe("iterator", () => {
     it("Test 1", () => {
       const buffer = new TextBuffer("Big")
@@ -107,3 +452,15 @@ describe("TextBuffer", () => {
     })
   })
 })
+
+const expectSameDocument = (actions: (buffer: TextBuffer, document: string) => void) => {
+  // given
+  const document = "Lorem ipsum dolor sit amet";
+  const buffer = new TextBuffer(document)
+
+  // when
+  actions(buffer, document)
+
+  // then
+  expect(buffer.print()).toEqual(document)
+}

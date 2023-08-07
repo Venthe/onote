@@ -8,7 +8,8 @@ export class TextBuffer implements Iterable<string | undefined> {
   private readonly original: string
   private added = ""
   private pieces: BufferPiece[] = [];
-  private history: Change[] = []
+  private history: HistoryElement[] = []
+  private undoOffset = 0
 
   private static readonly outOfBoundsError = () => new Error("Index out of bounds");
 
@@ -59,7 +60,13 @@ export class TextBuffer implements Iterable<string | undefined> {
 
     if (originalPiece.length === bufferOffset) {
       this.pieces.push(bufferPieceAdd(addedOffset, textLength))
-      this.history.push({originalPieces: [], indices: [this.pieces.length - 1, this.pieces.length]})
+      this.appendHistory({
+        change: {
+          pieces: [],
+          pieceStartIndex: this.pieces.length - 1,
+          count: 1
+        }, compensation: undefined
+      })
       return;
     }
 
@@ -76,7 +83,13 @@ export class TextBuffer implements Iterable<string | undefined> {
         length: originalPiece.length - (bufferOffset - originalPiece.offset)
       }
     ].filter(piece => piece.length > 0)
-    this.history.push({originalPieces: [{...originalPiece}], indices: [pieceIndex, replacedPieces.length]})
+    this.appendHistory({
+      change: {
+        pieces: [{...originalPiece}],
+        count: replacedPieces.length,
+        pieceStartIndex: pieceIndex
+      }, compensation: undefined
+    })
     this.pieces.splice(pieceIndex, 1, ...replacedPieces);
   }
 
@@ -106,14 +119,26 @@ export class TextBuffer implements Iterable<string | undefined> {
       const piece = this.pieces[initialAffectedPieceIndex];
       // Is the delete at the beginning of the piece?
       if (initialBufferOffset === piece.offset) {
-        this.history.push({originalPieces: [{...piece}], indices: [initialAffectedPieceIndex, 1]})
+        this.appendHistory({
+          change: {
+            pieces: [{...piece}],
+            count: 1,
+            pieceStartIndex: initialAffectedPieceIndex
+          }, compensation: undefined
+        })
         piece.offset += length;
         piece.length -= length;
         return;
       }
       // Or at the end of the piece?
       else if (finalBufferOffset === piece.offset + piece.length) {
-        this.history.push({originalPieces: [{...piece}], indices: [initialAffectedPieceIndex, 1]})
+        this.appendHistory({
+          change: {
+            pieces: [{...piece}],
+            count: 1,
+            pieceStartIndex: initialAffectedPieceIndex
+          }, compensation: undefined
+        })
         piece.length -= length;
         return;
       }
@@ -131,7 +156,13 @@ export class TextBuffer implements Iterable<string | undefined> {
         length: this.pieces[finalAffectedPieceIndex].length - (finalBufferOffset - this.pieces[finalAffectedPieceIndex].offset)
       }].filter(piece => piece.length > 0);
 
-    this.history.push({originalPieces: this.pieces.filter((e, i) => initialAffectedPieceIndex<=i && finalAffectedPieceIndex>=i).map(el => ({...el})), indices: [initialAffectedPieceIndex, deletePieces.length]})
+    this.appendHistory({
+      change: {
+        pieces: this.pieces.filter((e, i) => initialAffectedPieceIndex <= i && finalAffectedPieceIndex >= i).map(el => ({...el})),
+        pieceStartIndex: initialAffectedPieceIndex,
+        count: deletePieces.length
+      }, compensation: undefined
+    })
     this.pieces.splice(initialAffectedPieceIndex, finalAffectedPieceIndex - initialAffectedPieceIndex + 1, ...deletePieces);
   }
 
@@ -204,13 +235,19 @@ export class TextBuffer implements Iterable<string | undefined> {
     const historyElement = this.history.pop()
     if (historyElement === undefined) return;
 
-    this.pieces.splice(...historyElement.indices, ...historyElement.originalPieces)
+    this.pieces.splice(historyElement.change.pieceStartIndex, historyElement.change.count, ...historyElement.change.pieces)
 
     this.undo(number - 1)
   }
 
   redo(number = 1) {
-    throw new Error("Unsupp")
+    throw new Error("")
+  }
+
+  private appendHistory(change: HistoryElement) {
+    // this.history.splice(this.undoOffset)
+    this.history.push(change)
+    // this.undoOffset = this.history.length - 1
   }
 }
 
@@ -241,6 +278,11 @@ enum BufferType {
 }
 
 type Change = {
-  originalPieces: BufferPiece[]
-  indices: [number, number]
+  pieces: BufferPiece[]
+  pieceStartIndex: number
+  count: number
+}
+type HistoryElement = {
+  change: Change
+  compensation: Change | undefined
 }
