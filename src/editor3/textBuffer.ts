@@ -3,13 +3,14 @@
  *
  * Typically the text of the original document is held in one immutable block, and the text of each subsequent insert is stored in new immutable blocks. Because even deleted text is still included in the piece table, this makes multi-level or unlimited undo easier to implement with a piece table than with alternative data structures such as a gap buffer.
  */
+// TODO: Implement history limit
 // TODO: AppendHistory and AppendPieces should be merged
 // PieceTable
 export class TextBuffer implements Iterable<string | undefined> {
   private readonly original: string
   private added = ""
-  private pieces: BufferPiece[] = [];
-  private history: HistoryElement[] = []
+  private readonly pieces: BufferPiece[] = [];
+  private readonly history: HistoryElement[] = []
   private undoCount = 0
 
   private static readonly outOfBoundsError = () => new Error("Index out of bounds");
@@ -61,7 +62,7 @@ export class TextBuffer implements Iterable<string | undefined> {
 
     if (originalPiece.length === bufferOffset) {
       const piece = bufferPieceAdd(addedOffset, textLength);
-      this.pieces.splice(pieceIndex+1, 0, piece)
+      this.pieces.splice(pieceIndex + 1, 0, piece)
       this.appendHistory({
         change: {
           pieces: [],
@@ -71,7 +72,7 @@ export class TextBuffer implements Iterable<string | undefined> {
         compensation: {
           pieces: [{...piece}],
           count: 0,
-          pieceStartIndex: pieceIndex+1
+          pieceStartIndex: pieceIndex + 1
         }
       })
       return;
@@ -254,6 +255,24 @@ export class TextBuffer implements Iterable<string | undefined> {
       }
     }
     return str === "" ? undefined : str;
+  }
+
+  index(i: number): string {
+    if (i < 0) {
+      return this.index(this.pieces.map(p => p.length - p.offset -1)
+        .reduce((acc, val) => acc + val, 0) - i - 1)
+    }
+
+    let currentLengthTotal = 0
+    for (const element of this.pieces) {
+      const bufferPiece = element;
+      currentLengthTotal += bufferPiece.length
+      if (i < currentLengthTotal) {
+        return (bufferPiece.bufferType === BufferType.Original ? this.original : this.added)[Math.abs(i - (currentLengthTotal-bufferPiece.length))]
+      }
+    }
+
+    throw TextBuffer.outOfBoundsError()
   }
 
   undo(number = 1) {

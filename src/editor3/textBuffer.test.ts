@@ -477,6 +477,23 @@ describe("TextBuffer", () => {
       expect([...buffer]).toEqual(["B", "i", "g", " ", "b", "r", "w", "n"])
     })
   })
+  describe("index", () => {
+    it("1", () => {
+      const buffer = new TextBuffer("Big brown fox")
+
+      expect(buffer.index(0)).toEqual("B")
+    })
+    it("2", () => {
+      const buffer = new TextBuffer("Big brown fox")
+
+      expect(buffer.index(buffer.print().length-1)).toEqual("x")
+    })
+    it("3", () => {
+      const buffer = new TextBuffer("Big brown fox")
+
+      expect(buffer.index(-1)).toEqual("x")
+    })
+  })
 })
 
 const expectSameDocument = (actions: (buffer: TextBuffer, document: string) => void) => {
