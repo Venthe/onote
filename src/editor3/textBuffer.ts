@@ -3,13 +3,14 @@
  *
  * Typically the text of the original document is held in one immutable block, and the text of each subsequent insert is stored in new immutable blocks. Because even deleted text is still included in the piece table, this makes multi-level or unlimited undo easier to implement with a piece table than with alternative data structures such as a gap buffer.
  */
+// TODO: AppendHistory and AppendPieces should be merged
 // PieceTable
 export class TextBuffer implements Iterable<string | undefined> {
   private readonly original: string
   private added = ""
   private pieces: BufferPiece[] = [];
   private history: HistoryElement[] = []
-  private undoOffset = 0
+  private undoCount = 0
 
   private static readonly outOfBoundsError = () => new Error("Index out of bounds");
 
@@ -59,13 +60,19 @@ export class TextBuffer implements Iterable<string | undefined> {
     const originalPiece = this.pieces[pieceIndex]
 
     if (originalPiece.length === bufferOffset) {
-      this.pieces.push(bufferPieceAdd(addedOffset, textLength))
+      const piece = bufferPieceAdd(addedOffset, textLength);
+      this.pieces.splice(pieceIndex+1, 0, piece)
       this.appendHistory({
         change: {
           pieces: [],
           pieceStartIndex: this.pieces.length - 1,
           count: 1
-        }, compensation: undefined
+        },
+        compensation: {
+          pieces: [{...piece}],
+          count: 0,
+          pieceStartIndex: pieceIndex+1
+        }
       })
       return;
     }
@@ -88,7 +95,12 @@ export class TextBuffer implements Iterable<string | undefined> {
         pieces: [{...originalPiece}],
         count: replacedPieces.length,
         pieceStartIndex: pieceIndex
-      }, compensation: undefined
+      },
+      compensation: {
+        pieces: [...replacedPieces.map(el => ({...el}))],
+        pieceStartIndex: pieceIndex,
+        count: 1
+      }
     })
     this.pieces.splice(pieceIndex, 1, ...replacedPieces);
   }
@@ -124,7 +136,12 @@ export class TextBuffer implements Iterable<string | undefined> {
             pieces: [{...piece}],
             count: 1,
             pieceStartIndex: initialAffectedPieceIndex
-          }, compensation: undefined
+          },
+          compensation: {
+            pieces: [{...piece}],
+            pieceStartIndex: initialBufferOffset,
+            count: 1
+          }
         })
         piece.offset += length;
         piece.length -= length;
@@ -137,7 +154,12 @@ export class TextBuffer implements Iterable<string | undefined> {
             pieces: [{...piece}],
             count: 1,
             pieceStartIndex: initialAffectedPieceIndex
-          }, compensation: undefined
+          },
+          compensation: {
+            pieces: [{...piece}],
+            pieceStartIndex: initialBufferOffset,
+            count: 1
+          }
         })
         piece.length -= length;
         return;
@@ -161,7 +183,12 @@ export class TextBuffer implements Iterable<string | undefined> {
         pieces: this.pieces.filter((e, i) => initialAffectedPieceIndex <= i && finalAffectedPieceIndex >= i).map(el => ({...el})),
         pieceStartIndex: initialAffectedPieceIndex,
         count: deletePieces.length
-      }, compensation: undefined
+      },
+      compensation: {
+        count: finalAffectedPieceIndex - initialAffectedPieceIndex + 1,
+        pieceStartIndex: initialAffectedPieceIndex,
+        pieces: [...deletePieces.map(el => ({...el}))]
+      }
     })
     this.pieces.splice(initialAffectedPieceIndex, finalAffectedPieceIndex - initialAffectedPieceIndex + 1, ...deletePieces);
   }
@@ -232,22 +259,33 @@ export class TextBuffer implements Iterable<string | undefined> {
   undo(number = 1) {
     if (number <= 0) return
 
-    const historyElement = this.history.pop()
-    if (historyElement === undefined) return;
+    const historyElement = this.history[this.undoCount - 1]
+    if (historyElement === undefined) throw new Error("!");
 
     this.pieces.splice(historyElement.change.pieceStartIndex, historyElement.change.count, ...historyElement.change.pieces)
 
+    this.undoCount--
     this.undo(number - 1)
   }
 
   redo(number = 1) {
-    throw new Error("")
+    if (number <= 0) return
+
+    const historyElement = this.history[this.undoCount]
+    if (historyElement === undefined) {
+      return;
+    }
+
+    this.pieces.splice(historyElement.compensation.pieceStartIndex, historyElement.compensation.count, ...historyElement.compensation.pieces)
+
+    this.undoCount++
+    this.redo(number - 1)
   }
 
   private appendHistory(change: HistoryElement) {
-    // this.history.splice(this.undoOffset)
+    this.history.splice(this.undoCount)
     this.history.push(change)
-    // this.undoOffset = this.history.length - 1
+    this.undoCount = this.history.length
   }
 }
 
@@ -284,5 +322,5 @@ type Change = {
 }
 type HistoryElement = {
   change: Change
-  compensation: Change | undefined
+  compensation: Change
 }

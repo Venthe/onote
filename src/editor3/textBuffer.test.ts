@@ -16,12 +16,30 @@ describe("TextBuffer", () => {
       expect(buffer.print()).toEqual("Lorem ipsum dolor sit amet.")
     })
 
+    it("should show text at the end 2", () => {
+      const buffer = new TextBuffer("Lorem ipsum dolor sit amet")
+
+      buffer.insert(" dorian", buffer.print().length)
+      buffer.insert(" simon", buffer.print().length)
+
+      expect(buffer.print()).toEqual("Lorem ipsum dolor sit amet dorian simon")
+    })
+
     it("should show text at the beginning", () => {
       const buffer = new TextBuffer("Lorem ipsum dolor sit amet")
 
       buffer.insert("He said: ", 0)
 
       expect(buffer.print()).toEqual("He said: Lorem ipsum dolor sit amet")
+    })
+
+    it("should show text at the beginning 2", () => {
+      const buffer = new TextBuffer("Lorem ipsum dolor sit amet")
+
+      buffer.insert("He said: ", 0)
+      buffer.insert("She said: ", 0)
+
+      expect(buffer.print()).toEqual("She said: He said: Lorem ipsum dolor sit amet")
     })
 
     it("should show text at the middle of the line", () => {
@@ -31,21 +49,30 @@ describe("TextBuffer", () => {
 
       expect(buffer.print()).toEqual("Big brown, and small, fox has jumped over a lazy dog.")
     })
+
+    it("should show text at the middle of the line 2", () => {
+      const buffer = new TextBuffer("Big brown fox has jumped over a lazy dog.")
+
+      buffer.insert(", and small,", 9)
+      buffer.insert(", and tall", 9)
+
+      expect(buffer.print()).toEqual("Big brown, and tall, and small, fox has jumped over a lazy dog.")
+    })
   })
 
   describe("Undo", () => {
     describe("insert", () => {
       describe("at the end of the piece", () => {
         it("Single character insert", () => expectSameDocument((buffer, document) => {
-          buffer.insert(".", document.length)
+          buffer.insert(".", buffer.print().length)
           buffer.undo()
         }))
 
         it("Insert two times, undo manually two times", () => {
           const buffer = new TextBuffer("Lorem ipsum dolor sit amet")
 
-          buffer.insert(".", 26)
-          buffer.insert(".", 27)
+          buffer.insert("dorian", buffer.print().length)
+          buffer.insert("simon", buffer.print().length)
           buffer.undo()
           buffer.undo()
 
@@ -208,7 +235,7 @@ describe("TextBuffer", () => {
           buffer.redo()
 
           // then
-          expect(buffer.print()).toEqual("Simon says " + document)
+          expect(buffer.print()).toEqual("Simon says: " + document)
         })
         it("Manual redo of two changes", () => {
           // given
@@ -224,7 +251,7 @@ describe("TextBuffer", () => {
           buffer.redo()
 
           // then
-          expect(buffer.print()).toEqual("Simon says " + document)
+          expect(buffer.print()).toEqual("Dorian says: Simon says: " + document)
         })
         it("Bulk redo of two changes", () => {
           // given
@@ -239,7 +266,7 @@ describe("TextBuffer", () => {
           buffer.redo(2)
 
           // then
-          expect(buffer.print()).toEqual("Simon says " + document)
+          expect(buffer.print()).toEqual("Dorian says: Simon says: " + document)
         })
         it("Change, undo, change - redo does nothing", () => {
           // given
@@ -253,7 +280,7 @@ describe("TextBuffer", () => {
           buffer.redo()
 
           // then
-          expect(buffer.print()).toEqual("Simon says " + document)
+          expect(buffer.print()).toEqual("Simon says: " + document)
         })
       })
       describe("In the middle of text", () => {
@@ -268,7 +295,7 @@ describe("TextBuffer", () => {
           buffer.redo()
 
           // then
-          expect(buffer.print()).toEqual(document[0] + "Simon says " + document.substring(1))
+          expect(buffer.print()).toEqual(document[0] + "Simon says: " + document.substring(1))
         })
         it("Manual redo of two changes", () => {
           // given
@@ -284,7 +311,7 @@ describe("TextBuffer", () => {
           buffer.redo()
 
           // then
-          expect(buffer.print()).toEqual(document[0] + "Simon says " + document.substring(1))
+          expect(buffer.print()).toEqual("LDorian says: Simon says: orem ipsum dolor sit amet")
         })
         it("Bulk redo of two changes", () => {
           // given
@@ -299,7 +326,7 @@ describe("TextBuffer", () => {
           buffer.redo(2)
 
           // then
-          expect(buffer.print()).toEqual(document[0] + "Simon says " + document.substring(1))
+          expect(buffer.print()).toEqual("LDorian says: Simon says: orem ipsum dolor sit amet")
         })
         it("Change, undo, change - redo does nothing", () => {
           // given
@@ -307,13 +334,13 @@ describe("TextBuffer", () => {
           const buffer = new TextBuffer(document)
           buffer.insert("Dorian says: ", 1)
           buffer.undo()
-          buffer.insert("Simon says: ", 10)
+          buffer.insert("Simon says: ", 1)
 
           // when
           buffer.redo()
 
           // then
-          expect(buffer.print()).toEqual(document[0] + "Simon says " + document.substring(1))
+          expect(buffer.print()).toEqual(document[0] + "Simon says: " + document.substring(1))
         })
       })
       describe("At the end of text", () => {
@@ -321,7 +348,7 @@ describe("TextBuffer", () => {
           // given
           const document = "Lorem ipsum dolor sit amet";
           const buffer = new TextBuffer(document)
-          buffer.insert(", Simon said", document.length)
+          buffer.insert(", Simon said", buffer.print().length)
           buffer.undo()
 
           // when
@@ -334,8 +361,8 @@ describe("TextBuffer", () => {
           // given
           const document = "Lorem ipsum dolor sit amet";
           const buffer = new TextBuffer(document)
-          buffer.insert(", Simon said", document.length)
-          buffer.insert(", Dorian said", document.length)
+          buffer.insert(", Simon said", buffer.print().length)
+          buffer.insert(", Dorian said", buffer.print().length)
           buffer.undo()
           buffer.undo()
 
@@ -344,30 +371,29 @@ describe("TextBuffer", () => {
           buffer.redo()
 
           // then
-          expect(buffer.print()).toEqual(document + ", Simon said")
+          expect(buffer.print()).toEqual(document + ", Simon said, Dorian said")
         })
         it("Bulk redo of two changes", () => {
           // given
           const document = "Lorem ipsum dolor sit amet";
           const buffer = new TextBuffer(document)
-          buffer.insert(", Simon said", document.length)
-          buffer.insert(", Dorian said", document.length)
-          buffer.undo()
-          buffer.undo()
+          buffer.insert(", Simon said", buffer.print().length)
+          buffer.insert(", Dorian said", buffer.print().length)
+          buffer.undo(2)
 
           // when
           buffer.redo(2)
 
           // then
-          expect(buffer.print()).toEqual(document + ", Simon said")
+          expect(buffer.print()).toEqual(document + ", Simon said, Dorian said")
         })
         it("Change, undo, change - redo does nothing", () => {
           // given
           const document = "Lorem ipsum dolor sit amet";
           const buffer = new TextBuffer(document)
-          buffer.insert(", Dorian said", document.length)
+          buffer.insert(", Dorian said", buffer.print().length)
           buffer.undo()
-          buffer.insert(", Simon said", document.length)
+          buffer.insert(", Simon said", buffer.print().length)
 
           // when
           buffer.redo()
@@ -442,7 +468,7 @@ describe("TextBuffer", () => {
       expect([...buffer]).toEqual(["B", "i", "g", " ", "b", "r", "o", "w", "n"])
     })
 
-    it("Test 2", () => {
+    it("Test 3", () => {
       const buffer = new TextBuffer("Big")
 
       buffer.insert(" brown", 3)
