@@ -1,3 +1,5 @@
+import {RegExpMatchArrayWithIndices} from "../editor2/types";
+
 /**
  * In computing, a piece table is a data structure typically used to represent a text document while it is edited in a text editor. Initially a reference (or 'span') to the whole of the original file is created, which represents the as yet unchanged file. Subsequent inserts and deletes replace a span by combinations of one, two, or three references to sections of either the original document or to a buffer holding inserted text.[1]
  *
@@ -17,8 +19,15 @@ export class TextBuffer implements Iterable<string | undefined> {
 
   constructor(original?: string) {
     this.original = original ?? ""
-    this.pieces.push(bufferPieceOriginal(this.original))
+    this.pieces.push(({
+      bufferType: BufferType.Original,
+      offset: 0,
+      length: this.original.length,
+      lineStarts: getLineStarts(this.original)
+    }))
   }
+
+  getBuffer = (type: BufferType) => type === BufferType.Original ? this.original : this.added;
 
   [Symbol.iterator]() {
     let index = 0;
@@ -38,12 +47,14 @@ export class TextBuffer implements Iterable<string | undefined> {
         }
 
         const piece = this.pieces[index];
-        const val = (piece.bufferType === BufferType.Added ? this.added : this.original).substring(piece.offset + offset, piece.offset + 1 + offset)
+        const val = this.getBuffer(piece.bufferType).substring(piece.offset + offset, piece.offset + 1 + offset)
         offset++;
         return {value: val, done: false};
       }
     };
   }
+
+  getPieceText = (type: BufferType, offset: number, length: number): string => this.getBuffer(type).substring(offset, length);
 
   insert(text: string, offset: number): void {
     if (text.length === 0) {
@@ -61,7 +72,12 @@ export class TextBuffer implements Iterable<string | undefined> {
     const originalPiece = this.pieces[pieceIndex]
 
     if (originalPiece.length === bufferOffset) {
-      const piece = bufferPieceAdd(addedOffset, textLength);
+      const piece = ({
+        bufferType: BufferType.Added,
+        offset: addedOffset,
+        length: textLength,
+        lineStarts: getLineStarts(text)
+      });
       this.pieces.splice(pieceIndex + 1, 0, piece)
       this.appendHistory({
         change: {
@@ -82,13 +98,20 @@ export class TextBuffer implements Iterable<string | undefined> {
       {
         bufferType: originalPiece.bufferType,
         offset: originalPiece.offset,
-        length: bufferOffset - originalPiece.offset
+        length: bufferOffset - originalPiece.offset,
+        lineStarts: getLineStarts(this.getPieceText(originalPiece.bufferType, originalPiece.offset, bufferOffset - originalPiece.offset))
       },
-      bufferPieceAdd(addedOffset, textLength),
+      {
+        bufferType: BufferType.Added,
+        offset: addedOffset,
+        length: textLength,
+        lineStarts: getLineStarts(text)
+      },
       {
         bufferType: originalPiece.bufferType,
         offset: bufferOffset,
-        length: originalPiece.length - (bufferOffset - originalPiece.offset)
+        length: originalPiece.length - (bufferOffset - originalPiece.offset),
+        lineStarts: getLineStarts(this.getPieceText(originalPiece.bufferType, bufferOffset, originalPiece.length - (bufferOffset - originalPiece.offset)))
       }
     ].filter(piece => piece.length > 0)
     this.appendHistory({
@@ -128,8 +151,9 @@ export class TextBuffer implements Iterable<string | undefined> {
     } = this.pickPieceIndexAndOffset(offset + length)
 
     // If the delete occurs at the end or the beginning of a single piece, simply adjust the window
+    const initialAffectedPiece = this.pieces[initialAffectedPieceIndex];
     if (initialAffectedPieceIndex === finalAffectedPieceIndex) {
-      const piece = this.pieces[initialAffectedPieceIndex];
+      const piece = initialAffectedPiece;
       // Is the delete at the beginning of the piece?
       if (initialBufferOffset === piece.offset) {
         this.appendHistory({
@@ -167,16 +191,19 @@ export class TextBuffer implements Iterable<string | undefined> {
       }
     }
 
+    const finalAffectedPiece = this.pieces[finalAffectedPieceIndex];
     const deletePieces: BufferPiece[] = [
       {
-        bufferType: this.pieces[initialAffectedPieceIndex].bufferType,
-        offset: this.pieces[initialAffectedPieceIndex].offset,
-        length: initialBufferOffset - this.pieces[initialAffectedPieceIndex].offset
+        bufferType: initialAffectedPiece.bufferType,
+        offset: initialAffectedPiece.offset,
+        length: initialBufferOffset - initialAffectedPiece.offset,
+        lineStarts: getLineStarts(this.getPieceText(initialAffectedPiece.bufferType, initialAffectedPiece.offset, initialBufferOffset - initialAffectedPiece.offset))
       },
       {
-        bufferType: this.pieces[finalAffectedPieceIndex].bufferType,
+        bufferType: finalAffectedPiece.bufferType,
         offset: finalBufferOffset,
-        length: this.pieces[finalAffectedPieceIndex].length - (finalBufferOffset - this.pieces[finalAffectedPieceIndex].offset)
+        length: finalAffectedPiece.length - (finalBufferOffset - finalAffectedPiece.offset),
+        lineStarts: getLineStarts(this.getPieceText(finalAffectedPiece.bufferType, finalBufferOffset, finalAffectedPiece.length - (finalBufferOffset - finalAffectedPiece.offset)))
       }].filter(piece => piece.length > 0);
 
     this.appendHistory({
@@ -194,14 +221,11 @@ export class TextBuffer implements Iterable<string | undefined> {
     this.pieces.splice(initialAffectedPieceIndex, finalAffectedPieceIndex - initialAffectedPieceIndex + 1, ...deletePieces);
   }
 
-  print = (): string => this.pieces.map(piece => {
-    switch (piece.bufferType) {
-      case BufferType.Added:
-        return this.added.substring(piece.offset, piece.offset + piece.length)
-      case BufferType.Original:
-        return this.original.substring(piece.offset, piece.offset + piece.length)
-    }
-  }).join("");
+  print = (): string => this.pieces
+    .map(piece =>
+      this.getBuffer(piece.bufferType).substring(piece.offset, piece.offset + piece.length)
+    )
+    .join("");
 
   private pickPieceIndexAndOffset(offset: number) {
     if (offset < 0) {
@@ -259,7 +283,7 @@ export class TextBuffer implements Iterable<string | undefined> {
 
   index(i: number): string {
     if (i < 0) {
-      return this.index(this.pieces.map(p => p.length - p.offset -1)
+      return this.index(this.pieces.map(p => p.length - p.offset - 1)
         .reduce((acc, val) => acc + val, 0) - i - 1)
     }
 
@@ -268,7 +292,7 @@ export class TextBuffer implements Iterable<string | undefined> {
       const bufferPiece = element;
       currentLengthTotal += bufferPiece.length
       if (i < currentLengthTotal) {
-        return (bufferPiece.bufferType === BufferType.Original ? this.original : this.added)[Math.abs(i - (currentLengthTotal-bufferPiece.length))]
+        return (bufferPiece.bufferType === BufferType.Original ? this.original : this.added)[Math.abs(i - (currentLengthTotal - bufferPiece.length))]
       }
     }
 
@@ -306,25 +330,63 @@ export class TextBuffer implements Iterable<string | undefined> {
     this.history.push(change)
     this.undoCount = this.history.length
   }
+
+  // What an ugly, ugly code
+  getLine(soughtLineIndex: number): string | undefined {
+    if (soughtLineIndex < 0) throw TextBuffer.outOfBoundsError()
+
+    let totalLineIndex = 0;
+    let start: { pieceIndex: number, lineStart: number } | undefined = undefined
+    let end: { pieceIndex: number, lineStart: number } | undefined = undefined
+    for (const [pieceIndex, piece] of this.pieces.entries()) {
+      if (!start && totalLineIndex === soughtLineIndex) {
+        start = {pieceIndex, lineStart: 0}
+      }
+
+      for (const lineStart of piece.lineStarts) {
+        totalLineIndex++
+        if (start && totalLineIndex === soughtLineIndex + 1) {
+          end = {pieceIndex, lineStart}
+          break
+        }
+        if (!start && totalLineIndex === soughtLineIndex) {
+          start = {pieceIndex, lineStart}
+        }
+      }
+
+      if (end && start) break
+    }
+
+    if (start) {
+      return [...this.pieces.entries()]
+        .filter(([pieceIndex, piece]) => (start ? pieceIndex >= start.pieceIndex : false) && (end ? pieceIndex <= end.pieceIndex : true))
+        .map(([pieceIndex, piece]) => {
+            if (pieceIndex === start?.pieceIndex) {
+              if (pieceIndex === end?.pieceIndex) return this.getBuffer(piece.bufferType).substring(piece.offset + start.lineStart, piece.offset + end.lineStart)
+              else return this.getBuffer(piece.bufferType).substring(piece.offset + start.lineStart, piece.offset + piece.length)
+            } else if (pieceIndex === end?.pieceIndex) return this.getBuffer(piece.bufferType).substring(piece.offset, piece.offset + end.lineStart)
+            else return this.getBuffer(piece.bufferType).substring(piece.offset, piece.offset + piece.length)
+          }
+        )
+        .join("");
+    }
+
+    // match out of bounds
+    throw TextBuffer.outOfBoundsError()
+  }
 }
 
 type BufferPiece = {
   bufferType: BufferType;
   offset: number;
   length: number;
+  lineStarts: number[]
 }
 
-const bufferPieceOriginal = (span: string) => ({
-  bufferType: BufferType.Original,
-  offset: 0,
-  length: span.length
-})
-
-const bufferPieceAdd = (offset: number, length: number) => ({
-  bufferType: BufferType.Added,
-  offset,
-  length
-})
+function getLineStarts(text: string) {
+  return (new RegExp(/\r?\n/, "md")
+    .exec(text) as RegExpMatchArrayWithIndices | null)?.indices.map(i => i[1]) ?? [];
+}
 
 enum BufferType {
   /**

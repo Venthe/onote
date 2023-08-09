@@ -486,12 +486,92 @@ describe("TextBuffer", () => {
     it("2", () => {
       const buffer = new TextBuffer("Big brown fox")
 
-      expect(buffer.index(buffer.print().length-1)).toEqual("x")
+      expect(buffer.index(buffer.print().length - 1)).toEqual("x")
     })
     it("3", () => {
       const buffer = new TextBuffer("Big brown fox")
 
       expect(buffer.index(-1)).toEqual("x")
+    })
+  })
+  describe("getLine", () => {
+    describe("original", () => {
+      it("OOB on negative index", () => {
+        const buffer = new TextBuffer()
+
+        const line = () => buffer.getLine(-1);
+
+        expect(line).toThrow("Index out of bounds")
+      })
+      it("OOB on index too large", () => {
+        const buffer = new TextBuffer()
+
+        const line = () => buffer.getLine(1);
+
+        expect(line).toThrow("Index out of bounds")
+      })
+      it("Should get first line in single a line document", () => {
+        const buffer = new TextBuffer("Big brown fox")
+
+        const line = buffer.getLine(0);
+
+        expect(line).toEqual("Big brown fox")
+      })
+      it("Should get first line in single a line document with a new line", () => {
+        const buffer = new TextBuffer("Big brown fox\n")
+
+        const line = buffer.getLine(0);
+
+        expect(line).toEqual("Big brown fox\n")
+      })
+      it("Should get first line in a multi line document", () => {
+        const buffer = new TextBuffer("Big brown fox\nJumped over a lazy dog")
+
+        const line = buffer.getLine(0);
+
+        expect(line).toEqual("Big brown fox\n")
+      })
+      it("Should get second line in a multi line document", () => {
+        const buffer = new TextBuffer("Big brown fox\nJumped over a lazy dog")
+
+        const line = buffer.getLine(1);
+
+        expect(line).toEqual("Jumped over a lazy dog")
+      })
+    })
+    describe("insertion", () => {
+      it("Should get first line in single a line document", () => {
+        const buffer = new TextBuffer("Big brown fox")
+        buffer.insert(", and tall", 9)
+
+        const line = buffer.getLine(0);
+
+        expect(line).toEqual("Big brown, and tall fox")
+      })
+      it("Should get first line in single a line document with a newline", () => {
+        const buffer = new TextBuffer("Big brown fox\n")
+        buffer.insert(", and tall", 9)
+
+        const line = buffer.getLine(0);
+
+        expect(line).toEqual("Big brown, and tall fox\n")
+      })
+      it("Should get first line in multi line document with a newline", () => {
+        const buffer = new TextBuffer("Big brown fox\n")
+        buffer.insert("boar\nTall ", 4)
+
+        const line = buffer.getLine(0);
+
+        expect(line).toEqual("Big boar\n")
+      })
+      it("Should get second line in multi line document with a newline", () => {
+        const buffer = new TextBuffer("Big brown fox")
+        buffer.insert("boar\nTall ", 4)
+
+        const line = buffer.getLine(1);
+
+        expect(line).toEqual("Tall brown fox")
+      })
     })
   })
 })
