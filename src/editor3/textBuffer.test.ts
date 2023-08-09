@@ -574,6 +574,37 @@ describe("TextBuffer", () => {
       })
     })
   })
+
+  describe("lineCount", () => {
+    describe("Original", () => {
+      it("no line endings", () => {
+        expect(new TextBuffer("").lineCount).toEqual(1)
+      })
+      it("single line ending", () => {
+        expect(new TextBuffer("\n").lineCount).toEqual(2)
+      })
+      it("two line endings", () => {
+        expect(new TextBuffer("asdads\nasdadsads\n").lineCount).toEqual(2)
+      })
+    })
+    describe("insert", () => {
+      it("no line endings", () => {
+        const textBuffer = new TextBuffer("");
+        textBuffer.insert("adsasd", 0)
+        expect(textBuffer.lineCount).toEqual(1)
+      })
+      it("single line ending", () => {
+        const textBuffer = new TextBuffer("\n");
+        textBuffer.insert("adsasd", 0)
+        expect(textBuffer.lineCount).toEqual(2)
+      })
+      it("two line endings", () => {
+        const textBuffer = new TextBuffer("\n");
+        textBuffer.insert("ads\nasd", 0)
+        expect(textBuffer.lineCount).toEqual(3)
+      })
+    })
+  })
 })
 
 const expectSameDocument = (actions: (buffer: TextBuffer, document: string) => void) => {

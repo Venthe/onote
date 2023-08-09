@@ -8,6 +8,9 @@ import {RegExpMatchArrayWithIndices} from "../editor2/types";
 // TODO: Implement history limit
 // TODO: AppendHistory and AppendPieces should be merged
 // PieceTable
+//  Some implementations: https://github.com/sparkeditor/piece-table
+//  Abstract: https://code.visualstudio.com/blogs/2018/03/23/text-buffer-reimplementation
+//            https://github.com/rebornix/PieceTree/tree/master
 export class TextBuffer implements Iterable<string | undefined> {
   private readonly original: string
   private added = ""
@@ -373,6 +376,10 @@ export class TextBuffer implements Iterable<string | undefined> {
 
     // match out of bounds
     throw TextBuffer.outOfBoundsError()
+  }
+
+  get lineCount() {
+    return this.pieces.map(piece => piece.lineStarts.length).reduce((a, val) => a + val, 1)
   }
 }
 
