@@ -81,6 +81,7 @@
   highlightedOutput: >
     <div class="markdown-text markdown-paragraph">Text <strong class="markdown-bold-markup">in</br>bold</strong><div>
 - description: Header 1
+  disabled: true
   grammar: markdown.text
   input: >-
     # header

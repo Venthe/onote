@@ -7,6 +7,9 @@ import {RegExpMatchArrayWithIndices} from "../editor2/types";
  */
 // TODO: Implement history limit
 // TODO: AppendHistory and AppendPieces should be merged
+// TODO: Normalize when history limit is reached
+// TODO: Handle files > 256mb
+// TODO: Boost line lookup by using a balanced binary tree
 // PieceTable
 //  Some implementations: https://github.com/sparkeditor/piece-table
 //  Abstract: https://code.visualstudio.com/blogs/2018/03/23/text-buffer-reimplementation

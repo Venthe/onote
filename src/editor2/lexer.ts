@@ -2,8 +2,9 @@ import {ContextRoot, INode} from "./context";
 import {Grammar} from "./grammar";
 import * as TextMate from "./types";
 import {
-  BeginEndLanguageRule, Capture,
-  IncludeRule, NamedCapture,
+  BeginEndLanguageRule,
+  IncludeRule,
+  NamedCapture,
   Patterns,
   RegExpMatchArrayWithIndices,
   SingleMatchLanguageRule,
@@ -14,10 +15,6 @@ import {deduplicate, xor} from "./utils/array";
 export type Document = {
   data: string
   fileType?: string
-}
-
-interface TokenizationData {
-  line: string;
 }
 
 export class Lexer {
@@ -67,34 +64,35 @@ export class Lexer {
   }
 
   private tokenizeLine(line: string, context: INode): TokenizationResult {
-    console.debug(`${Array.from(new Array(context.depth)).map(() => " ").join("")}Tokenizing line: (${context.lineNumber})[${JSON.stringify([context.startIndex, context.endIndex])}] "${line}"`)
+    console.debug(`${(this.contextualLogNesting(context))} Tokenizing line: [lineNumber:${context.lineNumber}][limits:${JSON.stringify([context.startIndex, context.endIndex])}] - "${line}"`)
+    while (this.isIncludeRule(context.pattern)) {
+      context.swapPattern(this.resolveInclude(context.pattern.include, context.grammarScope))
+    }
+
     switch (true) {
       case this.isSingleMatch(context.pattern):
         return this.handleSingleMatchRule(line, context);
       case this.isBeginEndRule(context.pattern):
         return this.handleBeginEndRule(line, context)
-      case this.isGrammar(context.pattern):
+      case this.isRuleWithPatterns(context.pattern):
         return this.handleRuleWithPatterns(line, context)
-      case this.isIncludeRule(context.pattern):
-        return this.handleIncludeRule(line, context)
       default:
-        console.error(context.pattern)
+        console.error(`Unknown pattern type ${JSON.stringify(context.pattern)}`)
         throw new Error("Method not implemented");
     }
   }
 
-  private isSingleMatch(pattern: TextMate.LanguageRule): boolean {
-    return (pattern as TextMate.SingleMatchLanguageRule).match !== undefined
-  }
+  private isSingleMatch = (pattern: TextMate.LanguageRule): pattern is TextMate.SingleMatchLanguageRule =>
+    (pattern as TextMate.SingleMatchLanguageRule).match !== undefined;
 
   private handleSingleMatchRule(line: string, context: INode): TokenizationResult {
-    console.debug(`handleSingleMatchRule: [${line}] "${context.pattern}"`)
     const pattern = context.pattern as SingleMatchLanguageRule
+    console.debug(`${(this.contextualLogNesting(context))} handleSingleMatchRule: [match:${pattern.match}] - "${line}"`)
     const matchedData = new RegExp(pattern.match, "id").exec(line) as RegExpMatchArrayWithIndices | null;
     if (!matchedData) {
       return {line, tokens: []}
     }
-    console.debug(`Single rule matched: [${pattern.match}][${JSON.stringify([matchedData.indices?.[0][0], matchedData.indices?.[0][1]])}] "${matchedData[0]}"`)
+    console.debug(`Single rule matched: [match:${pattern.match}][limits:${JSON.stringify([matchedData.indices?.[0][0], matchedData.indices?.[0][1]])}] - matchedData:${matchedData[0]}"`)
 
     const tokens: TextMate.Token[] = matchedData
       .flatMap((match, index) => {
@@ -144,14 +142,11 @@ export class Lexer {
     return indices
   }
 
-  private isBeginEndRule(pattern: TextMate.LanguageRule): boolean {
-    return (pattern as TextMate.BeginEndLanguageRule).begin !== undefined && (pattern as TextMate.BeginEndLanguageRule).end !== undefined
-  }
+  private isBeginEndRule = (pattern: TextMate.LanguageRule): pattern is TextMate.BeginEndLanguageRule => (pattern as TextMate.BeginEndLanguageRule).begin !== undefined && (pattern as TextMate.BeginEndLanguageRule).end !== undefined;
 
-  // TODO: Implement
   private handleBeginEndRule(line: string, context: INode): TokenizationResult {
     const pattern = context.pattern as BeginEndLanguageRule
-    console.debug(`handleBeginEndRule: [${line}] "${pattern}"`)
+    console.debug(`${(this.contextualLogNesting(context))} handleBeginEndRule: [pattern:${pattern.begin}:${pattern.end}] - "${line}"`)
     if (!context.isScopeOpen(pattern.scopeName)) {
       const matchedData = new RegExp(pattern.begin, "id").exec(line) as RegExpMatchArrayWithIndices | null
       if (!matchedData) {
@@ -163,8 +158,10 @@ export class Lexer {
         throw new Error("This index should never be undefined")
       }
 
-      console.debug(`Begin rule matched: [${pattern.begin}][${JSON.stringify([matchedData.indices?.[0][0], matchedData.indices?.[0][1]])}] "${matchedData[0]}"`)
+      console.debug(`${(this.contextualLogNesting(context))} Begin rule matched: [begin:${pattern.begin}][limits:${JSON.stringify([matchedData.indices?.[0][0], matchedData.indices?.[0][1]])}] - "${matchedData[0]}"`)
       context.markScopeBegin(pattern.scopeName, beginIndex[1], pattern)
+
+      const searchForEnd = this.tokenizeLine(line, context.createChild({lineNumber: context.lineNumber, pattern: pattern, limits: [beginIndex[1]]}))
 
       return {
         line,
@@ -172,7 +169,7 @@ export class Lexer {
           startIndex: beginIndex[0],
           scopes: [pattern.scopeName],
           endIndex: beginIndex[1]
-        }]
+        }, ...searchForEnd.tokens.map(a => ({...a, endIndex: a.endIndex + beginIndex[1], startIndex: a.startIndex + beginIndex[1]}))]
       }
     } else {
       const matchedData = new RegExp(pattern.end, "id").exec(line) as RegExpMatchArrayWithIndices | null
@@ -185,7 +182,7 @@ export class Lexer {
         throw new Error("This index should never be undefined")
       }
 
-      console.debug(`End rule matched: [${pattern.end}][${JSON.stringify([matchedData.indices?.[0][0], matchedData.indices?.[0][1]])}] "${matchedData[0]}"`)
+      console.debug(`${(this.contextualLogNesting(context))} End rule matched: [end:${pattern.end}][limits:${JSON.stringify([matchedData.indices?.[0][0], matchedData.indices?.[0][1]])}] - "${matchedData[0]}"`)
       context.markScopeEnd(pattern.scopeName, endIndex[0])
 
       return {
@@ -197,31 +194,14 @@ export class Lexer {
         }]
       }
     }
-
-    // if (matchedData) {
-    //   context.markScopeBegin({ scope: pattern.scopeName, indices: matchedData.indices?.[0], contentScope: pattern.contentScope })
-    //   const result = matchedData?.map((match, index) => ({ match, index: matchedData.indices?.[index], additionalScope: pattern.beginCaptures?.[index].name }))
-    //     .map(el => ({ startIndex: el.index?.[0], endIndex: el.index?.[1], scopes: [pattern.scopeName, el.additionalScope, context.activeScopes].filter(el => el !== undefined) }))
-
-    //   if (pattern.patterns) {
-    //     const recursiveResult = this.tokenizeWithPattern(line, { patterns: pattern.patterns }, context)
-
-    //     return [...result, ...recursiveResult]
-    //   } else {
-    //     return result
-    //   }
-    // }
-
-    throw new Error("Method not implemented")
   }
 
-  private isGrammar(pattern: TextMate.LanguageRule): boolean {
-    return (pattern as TextMate.Patterns).patterns !== undefined;
-  }
+  private isRuleWithPatterns = (pattern: TextMate.LanguageRule): pattern is Patterns =>
+    (pattern as TextMate.Patterns).patterns !== undefined;
 
   private handleRuleWithPatterns(line: string, context: INode): TokenizationResult {
     const pattern = context.pattern as Patterns
-    console.debug(`handleRuleWithPatterns: [${line}][${pattern.strategy}]`)
+    console.debug(`${(this.contextualLogNesting(context))} handleRuleWithPatterns: [strategy:${pattern.strategy}] - "${line}"`)
     switch (true) {
       case pattern.strategy === undefined:
       case pattern.strategy === "matchAll":
@@ -247,16 +227,7 @@ export class Lexer {
     }
   }
 
-  private isIncludeRule(pattern: TextMate.LanguageRule): boolean {
-    return (pattern as TextMate.IncludeRule).include !== undefined;
-  }
-
-  private handleIncludeRule(line: string, context: INode): TokenizationResult {
-    const pattern = context.pattern as IncludeRule
-    console.debug(`handleIncludeRule: [${line}] "${pattern}"`)
-    const resolvedPattern = this.resolveInclude((pattern as TextMate.IncludeRule).include, context.grammarScope);
-    return this.tokenizeLine(line, context.createChild({lineNumber: context.lineNumber, pattern: resolvedPattern, limits: [context.startIndex, context.endIndex]}));
-  }
+  private isIncludeRule = (pattern: TextMate.LanguageRule): pattern is TextMate.IncludeRule => (pattern as TextMate.IncludeRule).include !== undefined;
 
   private resolveInclude(include: string, parentGrammarScope: string): TextMate.LanguageRule {
     switch (true) {
@@ -331,9 +302,11 @@ export class Lexer {
         }
     }
 
-    const result = Object.keys(resultObject)
+    return Object.keys(resultObject)
       .map(key => resultObject[key])
       .sort((a, b) => a.startIndex - b.startIndex);
-    return result;
   }
+
+  private contextualLogNesting = (context: INode) =>
+    Array.from(new Array(context.depth)).map(() => "-").join("");
 }

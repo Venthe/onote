@@ -3,7 +3,7 @@ import {LanguageRule} from "./types";
 type CreateChildParams = {
   pattern: LanguageRule;
   lineNumber: number,
-  limits?: [number, number | undefined]
+  limits?: [number, number | undefined] | [number, number] | [number]
 };
 
 interface ICommon {
@@ -18,24 +18,52 @@ export interface INode extends ICommon {
   startIndex: number
   endIndex?: number
   pattern: LanguageRule
-
   isScopeOpen(scopeName: string): boolean;
-
-  markScopeBegin(scopeNamescopeName: string, beginIndex: number, pattern: LanguageRule): boolean;
-
-  markScopeEnd(scopeName: string, endIndex: number): boolean;
+  markScopeBegin(scopeName: string, beginIndex: number, pattern: LanguageRule): void;
+  markScopeEnd(scopeName: string, endIndex: number): void;
+  swapPattern(resolveInclude: LanguageRule): void;
 }
 
 export class ContextRoot implements ICommon {
   depth = 0
+  private scopes: {
+    scopeName: string,
+    pattern: LanguageRule,
+    startIndex: number,
+    lineNumber: number,
+    endIndex?: number
+  }[] = []
 
-  createChild(params: CreateChildParams): INode {
-    return new Node(this, params)
+  createChild = (params: CreateChildParams): INode => new Node(this, params);
+
+  isScopeOpen(scopeName: string): boolean {
+    return !!this.scopes
+      .filter(sc => sc.scopeName === scopeName)
+      .filter(sc => !sc.endIndex)[0];
+  }
+
+  markScopeBegin(scopeName: string, startIndex: number, pattern: LanguageRule, lineNumber: number): void {
+    this.scopes.push({
+      scopeName,
+      startIndex,
+      pattern,
+      lineNumber
+    });
+  }
+
+  markScopeEnd(scopeName: string, endIndex: number): void {
+    this.scopes
+      .filter(s => s.scopeName === scopeName)
+      .filter(s => !s.endIndex)[0]
+      .endIndex = endIndex
   }
 }
 
 class Node implements INode {
-  constructor(private readonly parent: INode | ContextRoot, private readonly params: CreateChildParams) {
+  private subPattern?: LanguageRule
+
+  constructor(private readonly parent: INode | ContextRoot,
+              private readonly params: CreateChildParams) {
   }
 
   get grammarScope() {
@@ -51,7 +79,7 @@ class Node implements INode {
   }
 
   get pattern() {
-    return this.params.pattern
+    return this.subPattern ?? this.params.pattern
   }
 
   get startIndex() {
@@ -66,27 +94,19 @@ class Node implements INode {
     return [(this.params.pattern as any).scopeName, ...((this.parent as any)?.scopes ?? [])].filter(e => !!e) as string[]
   }
 
-  createChild(params: CreateChildParams): INode {
-    return new Node(this, params)
+  createChild = (params: CreateChildParams): INode => new Node(this, params);
+
+  isScopeOpen = (scopeName: string): boolean => this.parent.isScopeOpen(scopeName);
+
+  markScopeBegin(scopeName: string, beginIndex: number, pattern: LanguageRule, lineNumber?: number): void {
+    this.parent.markScopeBegin(scopeName, beginIndex, pattern, lineNumber ?? this.params.lineNumber)
   }
 
-  isScopeOpen(scopeName: string): boolean {
-    throw new Error("Method not implemented")
+  markScopeEnd(scopeName: string, endIndex: number): void {
+    this.parent.markScopeEnd(scopeName, endIndex)
   }
 
-  markScopeBegin(scopeName: string, beginIndex: number, pattern: LanguageRule): boolean {
-    throw new Error("Method not implemented")
-  }
-
-  markScopeEnd(scopeName: string, endIndex: number): boolean {
-    throw new Error("Method not implemented")
+  swapPattern(resolveInclude: LanguageRule): void {
+    this.subPattern = resolveInclude
   }
 }
-
-// const result: TextMate.ParsingResult[] = []
-// lineNumber: number;
-// startIndex: number;
-// endIndex?: number;
-// pattern: T;
-// grammarScope: string;
-// scopes: string[];

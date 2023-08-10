@@ -6,6 +6,7 @@ import * as yaml from 'js-yaml'
 // import * as url from 'url';
 import {timeExecution} from "./utils/benchmark";
 import {DocumentHandler} from "./document";
+import {tokens} from "@fluentui/react-components";
 
 declare const __dirname: string
 // const __dirname = path.dirname(url.fileURLToPath(import.meta.url))
@@ -34,11 +35,24 @@ describe.each(filenames)("Document", (filename) => {
 
     // then
     for (let i = 0; i < Math.max(output.length, result.length); i++) {
-      expect(result[i]?.line).toEqual(output[i]?.line)
-      for (let j = 0; j < Math.max(result[i]?.tokens.length ?? 0, output[i]?.tokens.length ?? 0); j++) {
-        expect(result[i]?.tokens[j]?.startIndex).toEqual(output[i]?.tokens[j]?.startIndex)
-        expect(result[i]?.tokens[j]?.endIndex).toEqual(output[i]?.tokens[j]?.endIndex)
-        expect(result[i]?.tokens[j]?.scopes.sort()).toEqual(output[i]?.tokens[j]?.scopes.sort())
+      const tokenizationResult = result[i];
+      const expectedResult = output[i];
+      expect(tokenizationResult?.line).toEqual(expectedResult?.line)
+      expect(tokenizationResult?.tokens.length).toEqual(expectedResult?.tokens.length)
+
+      for (let j = 0; j < Math.max(tokenizationResult?.tokens.length ?? 0, expectedResult?.tokens.length ?? 0); j++) {
+        const resultToken = tokenizationResult?.tokens[j];
+        const outputToken = expectedResult?.tokens[j];
+        expect({
+          startIndex: resultToken?.startIndex,
+          endIndex: resultToken?.endIndex,
+          scopes: resultToken?.scopes.sort()
+        })
+          .toEqual({
+            startIndex: outputToken?.startIndex,
+            endIndex: outputToken?.endIndex,
+            scopes: outputToken?.scopes.sort()
+          })
       }
     }
   })

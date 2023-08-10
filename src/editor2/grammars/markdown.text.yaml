@@ -12,8 +12,9 @@ patterns:
   - include: "#paragraph"
 repository:
   paragraph:
+    begin: ^
+    end: $
     scopeName: markdown.paragraph
-    match: ^.*$
   bold:
     patterns:
       - include: "#bold_asterisks"
