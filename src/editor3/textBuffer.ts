@@ -1,4 +1,5 @@
 import {RegExpMatchArrayWithIndices} from "../editor2/types";
+import {DocumentTextBuffer} from "../editor2/document";
 
 /**
  * In computing, a piece table is a data structure typically used to represent a text document while it is edited in a text editor. Initially a reference (or 'span') to the whole of the original file is created, which represents the as yet unchanged file. Subsequent inserts and deletes replace a span by combinations of one, two, or three references to sections of either the original document or to a buffer holding inserted text.[1]
@@ -14,7 +15,7 @@ import {RegExpMatchArrayWithIndices} from "../editor2/types";
 //  Some implementations: https://github.com/sparkeditor/piece-table
 //  Abstract: https://code.visualstudio.com/blogs/2018/03/23/text-buffer-reimplementation
 //            https://github.com/rebornix/PieceTree/tree/master
-export class TextBuffer implements Iterable<string | undefined> {
+export class TextBuffer implements Iterable<string | undefined>, DocumentTextBuffer {
   private readonly original: string
   private added = ""
   private readonly pieces: BufferPiece[] = [];
@@ -338,7 +339,7 @@ export class TextBuffer implements Iterable<string | undefined> {
   }
 
   // What an ugly, ugly code
-  getLine(soughtLineIndex: number): string | undefined {
+  getLine(soughtLineIndex: number): string {
     if (soughtLineIndex < 0) throw TextBuffer.outOfBoundsError()
 
     let totalLineIndex = 0;

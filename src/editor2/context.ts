@@ -3,7 +3,8 @@ import {LanguageRule} from "./types";
 type CreateChildParams = {
   pattern: LanguageRule;
   lineNumber: number,
-  limits?: [number, number | undefined] | [number, number] | [number]
+  limits?: [number, number | undefined] | [number, number] | [number],
+  scopes?: string[]
 };
 
 interface ICommon {

@@ -31,8 +31,8 @@ export type Grammar = {
 
 /** these are regular expressions that lines (in the document) are matched against. If a line matches one of the patterns (but not both), it becomes a folding marker (see the foldings section for more info). */
 type FoldingMarkers = {
-  foldingStartMarker: PlainTextRegexp
-  foldingEndMarker: PlainTextRegexp
+  foldingStartMarker?: PlainTextRegexp
+  foldingEndMarker?: PlainTextRegexp
 }
 
 export type Patterns = {

@@ -4,12 +4,11 @@ import * as fs from 'fs'
 import * as path from 'path'
 import * as yaml from 'js-yaml'
 // import * as url from 'url';
-import {timeExecution} from "./utils/benchmark";
-import {DocumentHandler} from "./document";
-import {tokens} from "@fluentui/react-components";
+import {GrammarRepository} from "./grammarRepository";
+import {DocumentTextBuffer} from "./document";
+import {diff} from 'jest-diff'
 
 declare const __dirname: string
-// const __dirname = path.dirname(url.fileURLToPath(import.meta.url))
 
 // ms per line. This is a baseline VSCode 1.8.1.
 const expectedPerformancePerLine = 0.08
@@ -20,7 +19,6 @@ describe.each(filenames)("Document", (filename) => {
 
   it.each(tests)("[$#] Tokenizer '$description'", (test) => {
     // given
-    const tokenizer = new Lexer({ loadGrammar: grammarLoader });
     const {
       grammar,
       input,
@@ -28,12 +26,13 @@ describe.each(filenames)("Document", (filename) => {
         tokenization: output
       }
     } = test
-    tokenizer.loadGrammar(grammar)
+    const tokenizer = new Lexer(mockGrammarLoader, mockTextBuffer(input));
 
     // when
-    const result = tokenizer.parse({ data: input, fileType: "md" })
+    const result = tokenizer.parse(grammar)
 
     // then
+    console.error(diff(result, output))
     for (let i = 0; i < Math.max(output.length, result.length); i++) {
       const tokenizationResult = result[i];
       const expectedResult = output[i];
@@ -57,10 +56,10 @@ describe.each(filenames)("Document", (filename) => {
     }
   })
 
-  xit.each(tests)("[$#] Performance of tokens '$description'", (test) => {
+  /*xit.each(tests)("[$#] Performance of tokens '$description'", (test) => {
     // given
-    const tokenizer = new Lexer({ loadGrammar: grammarLoader });
-    const { grammar, input} = test
+    const tokenizer = new Lexer({resolveGrammar: mockGrammarLoader});
+    const {grammar, input} = test
     tokenizer.loadGrammar(grammar)
 
     // when
@@ -75,8 +74,8 @@ describe.each(filenames)("Document", (filename) => {
 
   xit.each(tests)("[$#] Rich text '$description'", (test) => {
     // given
-    const { input, output: {richText: output} } = test
-    const lexer = new Lexer({ loadGrammar: grammarLoader });
+    const {input, output: {richText: output}} = test
+    const lexer = new Lexer({resolveGrammar: mockGrammarLoader});
     const documentHandler = new DocumentHandler(lexer);
 
     // when
@@ -91,8 +90,8 @@ describe.each(filenames)("Document", (filename) => {
 
   xit.each(tests)("[$#] Plain text '$description'", (test) => {
     // given
-    const { input, output: {plainText: output} } = test
-    const lexer = new Lexer({ loadGrammar: grammarLoader });
+    const {input, output: {plainText: output}} = test
+    const lexer = new Lexer({resolveGrammar: mockGrammarLoader});
     const documentHandler = new DocumentHandler(lexer);
 
     // when
@@ -103,7 +102,7 @@ describe.each(filenames)("Document", (filename) => {
 
     // then
     expect(documentHandler.plainText).toEqual(output)
-  })
+  })*/
 })
 
 interface Test {
@@ -112,7 +111,7 @@ interface Test {
   grammar: string
   input: string
   output: {
-    tokenization: {line: string, tokens: Token[]}[]
+    tokenization: { line: string, tokens: Token[] }[]
     plainText: string
     richText: string
   }
@@ -122,12 +121,21 @@ function loadTests(filename: string): Test[] {
   return yaml.load(fs.readFileSync(path.join(__dirname, "./tests", filename), 'utf-8')) as Test[];
 }
 
-const grammarLoader = (scopeName: string): Grammar => {
-  switch (scopeName) {
-    case "markdown.text":
-      return yaml.load(fs.readFileSync(path.join(__dirname, "grammars", `${scopeName}.yaml`), 'utf-8')) as Grammar
-    default:
-      throw new Error("UnsupportedOperationException")
+const mockGrammarLoader: GrammarRepository = {
+  resolveGrammar: (params) => {
+    switch (params.scope) {
+      case "markdown.text":
+        return yaml.load(fs.readFileSync(path.join(__dirname, "grammars", `${params.scope}.yaml`), 'utf-8')) as Grammar
+      default:
+        throw new Error("UnsupportedOperationException")
+    }
+  },
+  resolveScope(params) {
+    throw new Error()
   }
 }
 
+const mockTextBuffer: (document: string) => DocumentTextBuffer = (document) => ({
+  getLine: (index) => document.split(/\r?\n/)[index],
+  lineCount: document.split(/\r?\n/).length
+})

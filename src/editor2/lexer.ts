@@ -1,9 +1,7 @@
 import {ContextRoot, INode} from "./context";
-import {Grammar} from "./grammar";
 import * as TextMate from "./types";
 import {
   BeginEndLanguageRule,
-  IncludeRule,
   NamedCapture,
   Patterns,
   RegExpMatchArrayWithIndices,
@@ -11,56 +9,46 @@ import {
   TokenizationResult
 } from "./types";
 import {deduplicate, xor} from "./utils/array";
+import {DocumentLexer, DocumentTextBuffer} from "./document";
+import {GrammarRepository} from "./grammarRepository";
 
-export type Document = {
-  data: string
-  fileType?: string
-}
-
-export class Lexer {
-  private grammars: Record<string, Grammar> = {}
-
-  constructor(private readonly grammarLoader: {
-    loadGrammar: (scope: string) => TextMate.Grammar
-  }) {
+export class Lexer implements DocumentLexer {
+  constructor(private readonly grammarRepository: GrammarRepository,
+              private readonly textBuffer: DocumentTextBuffer) {
   }
 
-  loadGrammar(...scopes: string[]) {
-    scopes.map(scope => {
-      console.debug(`Loading grammar for scope: ${scope}`)
-      return this.grammarLoader.loadGrammar(scope);
-    })
-      .forEach(grammar => this.grammars[grammar.scopeName] = new Grammar(grammar))
-  }
+  /* get documentType(): string {
+       // return this.grammarRepository.resolveGrammar({})
+     throw new Error("")
+   }*/
 
-  parse({data: document, fileType}: Document): TokenizationResult[] {
-    const grammar = this.pickGrammarScopeForDocument({data: document, fileType})
+  /*loadGrammar(...scopes: string[]) {
+      scopes.map(scope => {
+          console.debug(`Loading grammar for scope: ${scope}`)
+          return this.grammarLoader.loadGrammar(scope);
+      }).forEach(grammar => this.grammars[grammar.scopeName] = new Grammar(grammar))
+  }*/
+
+  parse(scopeName: string): TokenizationResult[] {
+    const grammar = this.grammarRepository.resolveGrammar({scope: scopeName})
 
     if (!grammar) {
       throw new Error("Grammar is not set")
     }
 
-    const lines = document.split(/\r?\n/)
     const contextRoot = new ContextRoot();
     const result: TokenizationResult[] = []
 
-    // , lineNumber: index, pattern: grammar, startIndex: 0, grammarScope: grammar.scopeName, scopes: [grammar.scopeName]
-    lines.forEach((line, lineNumber) => {
-      const context = contextRoot.createChild({lineNumber, pattern: grammar})
+    for (let lineIndex = 0; lineIndex < this.textBuffer.lineCount; lineIndex++) {
+      const line = this.textBuffer.getLine(lineIndex)
+      const context = contextRoot.createChild({lineNumber: lineIndex, pattern: grammar})
       const tokenizationResult = this.tokenizeLine(line, context)
       const deduplicatedTokens = this.deduplicateScopes(tokenizationResult.tokens);
       const mappedTokens = this.mapTokensToContiguous(line, deduplicatedTokens)
       result.push({line, tokens: mappedTokens})
-    })
+    }
 
     return result
-  }
-
-  private pickGrammarScopeForDocument(document: Document): TextMate.Grammar | undefined {
-    return Object.keys(this.grammars)
-      .map(grammarKey => this.grammars[grammarKey])
-      .filter(grammar => grammar.isGrammarApplicable(document))
-      .map(grammar => grammar.grammar)[0]
   }
 
   private tokenizeLine(line: string, context: INode): TokenizationResult {
@@ -122,7 +110,11 @@ export class Lexer {
         endIndex: endIndex
       }]
     } else {
-      const tokenizedLine = this.tokenizeLine(line, context.createChild({lineNumber: context.lineNumber, limits: [startIndex, endIndex], pattern: capture as Patterns}));
+      const tokenizedLine = this.tokenizeLine(line, context.createChild({
+        lineNumber: context.lineNumber,
+        limits: [startIndex, endIndex],
+        pattern: capture as Patterns
+      }));
       return tokenizedLine.tokens
         .map(token => ({
           ...token,
@@ -161,7 +153,11 @@ export class Lexer {
       console.debug(`${(this.contextualLogNesting(context))} Begin rule matched: [begin:${pattern.begin}][limits:${JSON.stringify([matchedData.indices?.[0][0], matchedData.indices?.[0][1]])}] - "${matchedData[0]}"`)
       context.markScopeBegin(pattern.scopeName, beginIndex[1], pattern)
 
-      const searchForEnd = this.tokenizeLine(line, context.createChild({lineNumber: context.lineNumber, pattern: pattern, limits: [beginIndex[1]]}))
+      const searchForEnd = this.tokenizeLine(line, context.createChild({
+        lineNumber: context.lineNumber,
+        pattern: pattern,
+        limits: [beginIndex[1]]
+      }))
 
       return {
         line,
@@ -169,7 +165,11 @@ export class Lexer {
           startIndex: beginIndex[0],
           scopes: [pattern.scopeName],
           endIndex: beginIndex[1]
-        }, ...searchForEnd.tokens.map(a => ({...a, endIndex: a.endIndex + beginIndex[1], startIndex: a.startIndex + beginIndex[1]}))]
+        }, ...searchForEnd.tokens.map(a => ({
+          ...a,
+          endIndex: a.endIndex + beginIndex[1],
+          startIndex: a.startIndex + beginIndex[1]
+        }))]
       }
     } else {
       const matchedData = new RegExp(pattern.end, "id").exec(line) as RegExpMatchArrayWithIndices | null
@@ -206,7 +206,11 @@ export class Lexer {
       case pattern.strategy === undefined:
       case pattern.strategy === "matchAll":
         return pattern.patterns
-          .map(subPattern => this.tokenizeLine(line, context.createChild({lineNumber: context.lineNumber, pattern: subPattern, limits: [context.startIndex, context.endIndex]})))
+          .map(subPattern => this.tokenizeLine(line, context.createChild({
+            lineNumber: context.lineNumber,
+            pattern: subPattern,
+            limits: [context.startIndex, context.endIndex]
+          })))
           .reduce((acc, val) => {
             val.tokens.forEach(token => acc.tokens.push(token))
             return acc
@@ -214,9 +218,13 @@ export class Lexer {
       case pattern.strategy === "matchFirst":
         // eslint-disable-next-line no-case-declarations
         let result = undefined
-        for(const p of pattern.patterns) {
-          const r = this.tokenizeLine(line, context.createChild({lineNumber: context.lineNumber, pattern: p, limits: [context.startIndex, context.endIndex]}))
-          if(r.tokens.length > 0) {
+        for (const p of pattern.patterns) {
+          const r = this.tokenizeLine(line, context.createChild({
+            lineNumber: context.lineNumber,
+            pattern: p,
+            limits: [context.startIndex, context.endIndex]
+          }))
+          if (r.tokens.length > 0) {
             result = r;
             break;
           }
@@ -241,16 +249,17 @@ export class Lexer {
   }
 
   private resolveGrammar(scope: string): TextMate.Grammar {
-    if (!this.grammars[scope]) {
+    const grammar = this.grammarRepository.resolveGrammar({scope})
+    if (!grammar) {
       throw new Error("Grammar is not set")
     }
 
     console.debug(`Resolving grammar: "${scope}"`)
-    return this.grammars[scope].grammar
+    return grammar
   }
 
   private resolveFromCurrentGrammarRepository(includeKey: string, parentGrammarScope: string): TextMate.LanguageRule {
-    const grammar = this.grammars[parentGrammarScope]?.grammar;
+    const grammar = this.grammarRepository.resolveGrammar({scope: parentGrammarScope})
 
     if (!grammar) {
       throw new Error("Grammar is not set")
