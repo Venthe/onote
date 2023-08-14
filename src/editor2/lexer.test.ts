@@ -7,6 +7,7 @@ import * as yaml from 'js-yaml'
 import {GrammarRepository} from "./grammarRepository";
 import {DocumentTextBuffer} from "./document";
 import {diff} from 'jest-diff'
+import {timeExecution} from "./utils/benchmark";
 
 declare const __dirname: string
 
@@ -56,53 +57,17 @@ describe.each(filenames)("Document", (filename) => {
     }
   })
 
-  /*xit.each(tests)("[$#] Performance of tokens '$description'", (test) => {
+  xit.each(tests)("[$#] Performance of tokens '$description'", (test) => {
     // given
-    const tokenizer = new Lexer({resolveGrammar: mockGrammarLoader});
     const {grammar, input} = test
-    tokenizer.loadGrammar(grammar)
+    const tokenizer = new Lexer(mockGrammarLoader, mockTextBuffer(input));
 
     // when
-    const {summary} = timeExecution(() => tokenizer.parse({
-      data: input,
-      fileType: "md"
-    }), {quantiles: [0.95]})
+    const {summary} = timeExecution(() => tokenizer.parse(grammar), {quantiles: [0.95]})
 
     // then
     expect(summary.quantiles?.[0.95]).toBeLessThan(expectedPerformancePerLine * summary.repetitionCount)
   }, 2000)
-
-  xit.each(tests)("[$#] Rich text '$description'", (test) => {
-    // given
-    const {input, output: {richText: output}} = test
-    const lexer = new Lexer({resolveGrammar: mockGrammarLoader});
-    const documentHandler = new DocumentHandler(lexer);
-
-    // when
-    documentHandler.parse({
-      data: input,
-      fileType: "md"
-    })
-
-    // then
-    expect(documentHandler.richText).toEqual(output)
-  })
-
-  xit.each(tests)("[$#] Plain text '$description'", (test) => {
-    // given
-    const {input, output: {plainText: output}} = test
-    const lexer = new Lexer({resolveGrammar: mockGrammarLoader});
-    const documentHandler = new DocumentHandler(lexer);
-
-    // when
-    documentHandler.parse({
-      data: input,
-      fileType: "md"
-    })
-
-    // then
-    expect(documentHandler.plainText).toEqual(output)
-  })*/
 })
 
 interface Test {

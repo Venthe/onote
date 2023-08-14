@@ -7,7 +7,7 @@ export type Grammar = {
   scopeName: string
 
   /** This is an array of file type extensions that the grammar should (by default) be used with. This is referenced when TextMate does not know what grammar to use for a file the user opens. If however the user selects a grammar from the language pop-up in the status bar, TextMate will remember that choice. */
-  fileTypes: string[]
+  fileTypes?: string[]
 
   /** a regular expression which is matched against the first line of the document (when it is first loaded). If it matches, the grammar is used for the document (unless there is a user override). Example: ^#!/.*\bruby\b. */
   firstLineMatch?: PlainTextRegexp
@@ -36,8 +36,6 @@ type FoldingMarkers = {
 }
 
 export type Patterns = {
-  strategy?: "matchFirst" | "matchAll"
-
   /** This is an array with the actual rules used to parse the document. In this example there are two rules (line 6-8 and 9-17). Rules will be explained in the next section. */
   patterns: LanguageRule[]
 }

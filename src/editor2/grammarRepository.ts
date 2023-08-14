@@ -39,7 +39,7 @@ export class GrammarRepositoryImpl implements GrammarRepository {
         votes.push(!!new RegExp(grammar.firstLineMatch, "i").exec(params.content.split(/\r?\n/, 1)[0]))
       }
 
-      if (votes.includes(true)) {
+      if (votes.length > 0 && votes.includes(true)) {
         return grammar
       }
     }

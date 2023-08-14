@@ -1,6 +1,16 @@
-import {LanguageRule} from "./types";
+import {Grammar, LanguageRule, TokenizationResult} from "./types";
 
-type CreateChildParams = {
+interface OpenNode {}
+interface ClosedNode {}
+
+export class Context {
+  private results: (OpenNode | ClosedNode)[] = []
+
+  constructor(readonly grammarScope: string) {
+  }
+}
+
+/*type CreateChildParams = {
   pattern: LanguageRule;
   lineNumber: number,
   limits?: [number, number | undefined] | [number, number] | [number],
@@ -110,4 +120,4 @@ class Node implements INode {
   swapPattern(resolveInclude: LanguageRule): void {
     this.subPattern = resolveInclude
   }
-}
+}*/
